@@ -1,0 +1,279 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Building2, 
+  Plus, 
+  Edit2, 
+  Trash2, 
+  MapPin, 
+  Users, 
+  Search,
+  X,
+  Save,
+  Loader2,
+  AlertCircle
+} from 'lucide-react';
+import { TaxCenter } from '../../types';
+import { cn } from '../../lib/utils';
+
+export function TaxCenterManagement() {
+  const [centers, setCenters] = useState<TaxCenter[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCenter, setEditingCenter] = useState<TaxCenter | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    location: ''
+  });
+
+  useEffect(() => {
+    fetchCenters();
+  }, []);
+
+  const fetchCenters = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/tax-centers');
+      const data = await res.json();
+      setCenters(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenModal = (center: TaxCenter | null = null) => {
+    if (center) {
+      setEditingCenter(center);
+      setFormData({
+        name: center.name,
+        location: center.location || ''
+      });
+    } else {
+      setEditingCenter(null);
+      setFormData({
+        name: '',
+        location: ''
+      });
+    }
+    setError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    const url = editingCenter ? `/api/admin/tax-centers/${editingCenter.id}` : '/api/admin/tax-centers';
+    const method = editingCenter ? 'PATCH' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save tax center');
+      }
+
+      await fetchCenters();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this tax center?')) return;
+    
+    try {
+      const res = await fetch(`/api/admin/tax-centers/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete tax center');
+      }
+      await fetchCenters();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const filteredCenters = centers.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.location && c.location.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-zinc-900 tracking-tight italic serif">Tax Center Management</h1>
+          <p className="text-zinc-500">Configure and manage Ministry branch offices.</p>
+        </div>
+        <button 
+          onClick={() => handleOpenModal()}
+          className="flex items-center gap-2 px-6 py-3 bg-zinc-950 text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
+        >
+          <Plus size={20} /> Add New Center
+        </button>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-zinc-50 bg-zinc-50/50">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search by name or location..." 
+              className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] font-bold uppercase tracking-widest border-b border-zinc-50">
+                <th className="px-6 py-4">Tax Center</th>
+                <th className="px-6 py-4">Location</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-50">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-12 text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                  </td>
+                </tr>
+              ) : filteredCenters.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-12 text-center text-zinc-400">
+                    No tax centers found.
+                  </td>
+                </tr>
+              ) : filteredCenters.map((c) => (
+                <tr key={c.id} className="hover:bg-zinc-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
+                        <Building2 size={20} />
+                      </div>
+                      <p className="text-sm font-bold text-zinc-900">{c.name}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-sm text-zinc-600">
+                      <MapPin size={14} className="text-zinc-400" />
+                      {c.location || 'N/A'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => handleOpenModal(c)}
+                        className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(c.id)}
+                        className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Tax Center Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-zinc-100 overflow-hidden">
+            <div className="px-8 py-6 border-b border-zinc-50 flex items-center justify-between bg-zinc-50/50">
+              <h2 className="text-xl font-bold text-zinc-900 italic serif">
+                {editingCenter ? 'Edit Tax Center' : 'Add New Tax Center'}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-zinc-400 hover:text-zinc-900 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex gap-3 text-red-600 text-sm font-medium">
+                  <AlertCircle size={20} className="shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Center Name</label>
+                <div className="relative">
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <input 
+                    required
+                    type="text"
+                    className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="e.g. Addis Ababa Central Branch"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Location / Address</label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <input 
+                    required
+                    type="text"
+                    className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="e.g. Arada Subcity, Addis Ababa"
+                    value={formData.location}
+                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-6 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-4 bg-zinc-50 text-zinc-600 rounded-2xl font-bold hover:bg-zinc-100 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-4 bg-zinc-950 text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-zinc-200"
+                >
+                  {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20} /> {editingCenter ? 'Update Center' : 'Create Center'}</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
