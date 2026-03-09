@@ -5,11 +5,13 @@ import {
   updateUser, 
   deleteUser, 
   updateProfile, 
-  changePassword 
+  changePassword,
+  getPerformanceStats
 } from "../controllers/userController.js";
 
 export const adminUserRoutes = express.Router();
 adminUserRoutes.get("/", getUsers);
+adminUserRoutes.get("/performance", getPerformanceStats);
 adminUserRoutes.post("/", createUser);
 adminUserRoutes.patch("/:id", updateUser);
 adminUserRoutes.delete("/:id", deleteUser);

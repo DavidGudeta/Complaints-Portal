@@ -90,23 +90,31 @@ export function ContactPage() {
 
           <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl shadow-zinc-200/50 border border-zinc-100">
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Name</label>
+                <input 
+                  required
+                  type="text" 
+                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-blue-600 focus:ring-0 transition-all"
+                  placeholder="Your full name"
+                />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Name</label>
-                  <input 
-                    required
-                    type="text" 
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-blue-600 focus:ring-0 transition-all"
-                    placeholder="Your full name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Email</label>
+                  <label className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
                   <input 
                     required
                     type="email" 
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-blue-600 focus:ring-0 transition-all"
                     placeholder="your@email.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-blue-600 focus:ring-0 transition-all"
+                    placeholder="+251 ..."
                   />
                 </div>
               </div>

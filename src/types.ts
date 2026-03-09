@@ -67,14 +67,21 @@ export interface Complaint {
   phone: string;
   subject: string;
   category_id: number;
+  subcategory_id?: number;
   tax_center_id?: number;
   description: string;
+  mrc_code?: string;
+  ref_no?: string;
+  woreda?: string;
+  zone?: string;
+  region?: string;
   status: ComplaintStatus;
   assigned_to?: number;
   created_at: string;
   updated_at: string;
   due_date?: string;
   category_name?: string;
+  subcategory_name?: string;
   assigned_name?: string;
   tax_center_name?: string;
 }
@@ -87,6 +94,20 @@ export interface ComplaintResponse {
   user_role: UserRole;
   message: string;
   created_at: string;
+  tracking_code?: string;
+  complainant_name?: string;
+}
+
+export interface Assessment {
+  id: number;
+  complaint_id: number;
+  user_id: number;
+  assessor_name: string;
+  findings: string;
+  recommendation?: string;
+  created_at: string;
+  tracking_code: string;
+  complainant_name: string;
 }
 
 export interface Attachment {

@@ -11,6 +11,8 @@ import { Login } from './pages/Login';
 import { InternalLayout } from './components/InternalLayout';
 import { Dashboard } from './pages/Dashboard';
 import { ComplaintList } from './components/ComplaintList';
+import { AssessmentList } from './components/AssessmentList';
+import { ResponseList } from './components/ResponseList';
 import { ComplaintStatus } from './types';
 
 import { ComplaintDetail } from './pages/ComplaintDetail';
@@ -18,6 +20,8 @@ import { Profile } from './pages/Profile';
 import { UserManagement } from './pages/admin/UserManagement';
 import { RoleManagement } from './pages/admin/RoleManagement';
 import { TaxCenterManagement } from './pages/admin/TaxCenterManagement';
+import { ReportPage } from './pages/ReportPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { UserRole } from './types';
 
 interface RoleGuardProps {
@@ -30,8 +34,8 @@ function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-zinc-50">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="h-screen w-screen flex items-center justify-center bg-sky-50">
+        <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -70,12 +74,12 @@ function AppRoutes() {
         } />
         <Route path="/cases/assessment" element={
           <RoleGuard allowedRoles={[UserRole.DIRECTOR, UserRole.TEAM_LEADER]}>
-            <ComplaintList title="Assessment Management" status={ComplaintStatus.ASSESSED} />
+            <AssessmentList title="Assessment Management" />
           </RoleGuard>
         } />
         <Route path="/cases/response" element={
           <RoleGuard allowedRoles={[UserRole.DIRECTOR, UserRole.TEAM_LEADER]}>
-            <ComplaintList title="Response Management" status={ComplaintStatus.RESPONDED} />
+            <ResponseList title="Response Management" />
           </RoleGuard>
         } />
         
@@ -158,8 +162,26 @@ function AppRoutes() {
         <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
 
         {/* Shared Reports & Settings */}
-        <Route path="/reports/*" element={<div className="p-8 text-center text-zinc-400">Reports module coming soon...</div>} />
-        <Route path="/settings/*" element={<div className="p-8 text-center text-zinc-400">Settings module coming soon...</div>} />
+        <Route path="/reports/complaints" element={<ReportPage title="Complaints Analysis" type="complaints" />} />
+        <Route path="/reports/assessment" element={<ReportPage title="Assessment Metrics" type="assessment" />} />
+        <Route path="/reports/performance" element={<ReportPage title="Performance Overview" type="performance" />} />
+        <Route path="/reports/feedback" element={<ReportPage title="Feedback Insights" type="feedback" />} />
+        
+        <Route path="/settings/categories" element={
+          <RoleGuard allowedRoles={[UserRole.DIRECTOR]}>
+            <SettingsPage title="Complaint Categories" type="categories" />
+          </RoleGuard>
+        } />
+        <Route path="/settings/subcategories" element={
+          <RoleGuard allowedRoles={[UserRole.DIRECTOR]}>
+            <SettingsPage title="Complaint Subcategories" type="subcategories" />
+          </RoleGuard>
+        } />
+        <Route path="/settings/status" element={
+          <RoleGuard allowedRoles={[UserRole.DIRECTOR]}>
+            <SettingsPage title="System Statuses" type="status" />
+          </RoleGuard>
+        } />
       </Route>
 
       {/* Fallback */}

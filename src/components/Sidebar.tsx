@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   PanelLeftClose,
   PanelLeftOpen,
+  Tag,
   X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -91,8 +92,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             title: 'Settings',
             icon: <Settings size={20} />,
             children: [
-              { title: 'Complaints Category', href: '/settings/categories' },
               { title: 'Complaints Status', href: '/settings/status' },
+              { title: 'Complaints Category', href: '/settings/categories' },
+              { title: 'Complaints Sub Category', href: '/settings/subcategories' },
             ]
           }
         ];
@@ -168,7 +170,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
           ...base,
           { title: 'User Management', icon: <Users size={20} />, href: '/admin/users' },
           { title: 'Role Management', icon: <ShieldCheck size={20} />, href: '/admin/roles' },
-          { title: 'Tax Center Management', icon: <Building2 size={20} />, href: '/admin/tax-centers' },
+          { title: 'Tax Center Management', icon: <Building2 size={20} />, href: '/admin/tax-centers' }
         ];
 
       default:
@@ -180,23 +182,28 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "fixed inset-y-0 left-0 z-50 lg:relative lg:flex flex-col bg-zinc-950 text-zinc-400 h-screen border-r border-zinc-800 transition-all duration-300 ease-in-out",
+      "fixed inset-y-0 left-0 z-50 lg:relative lg:flex flex-col bg-sky-600 text-sky-100 h-screen border-r border-sky-500 transition-all duration-300 ease-in-out",
       isCollapsed ? "w-20" : "w-64",
       isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
     )}>
       <div className={cn(
-        "p-6 border-b border-zinc-800 flex items-center justify-between",
+        "p-6 border-b border-sky-500 flex items-center justify-between",
         isCollapsed ? "px-4" : "px-6"
       )}>
         <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl tracking-tight overflow-hidden whitespace-nowrap">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shrink-0">
-            <ShieldCheck size={20} />
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1.5 shrink-0 shadow-sm">
+            <img 
+              src="https://revenue.gov.et/wp-content/uploads/2021/08/cropped-LOGO-1-192x192.png" 
+              alt="Ministry of Revenues Logo" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
           </div>
           {!isCollapsed && <span>Complaints portal</span>}
         </Link>
         <button 
           onClick={onClose}
-          className="lg:hidden p-2 text-zinc-400 hover:text-white transition-colors"
+          className="lg:hidden p-2 text-sky-200 hover:text-white transition-colors"
         >
           <X size={20} />
         </button>
@@ -210,7 +217,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 <button
                   onClick={() => toggleMenu(item.title)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-zinc-900 hover:text-white transition-all group",
+                    "w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-sky-500 hover:text-white transition-all group",
                     isCollapsed && "justify-center px-0"
                   )}
                   title={isCollapsed ? item.title : undefined}
@@ -239,7 +246,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                         className={cn(
                           "block px-3 py-1.5 text-sm rounded-lg transition-colors",
                           location.pathname === child.href 
-                            ? "bg-zinc-900 text-white font-medium" 
+                            ? "bg-sky-500 text-white font-medium" 
                             : "hover:text-white"
                         )}
                       >
@@ -259,8 +266,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                   "flex items-center gap-3 px-3 py-2 rounded-xl transition-all group",
                   isCollapsed && "justify-center px-0",
                   location.pathname === item.href 
-                    ? "bg-zinc-900 text-white" 
-                    : "hover:bg-zinc-900 hover:text-white"
+                    ? "bg-sky-500 text-white" 
+                    : "hover:bg-sky-500 hover:text-white"
                 )}
                 title={isCollapsed ? item.title : undefined}
               >

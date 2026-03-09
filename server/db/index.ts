@@ -36,8 +36,14 @@ db.exec(`
     phone TEXT NOT NULL,
     subject TEXT NOT NULL,
     category_id INTEGER NOT NULL,
+    subcategory_id INTEGER,
     tax_center_id INTEGER,
     description TEXT NOT NULL,
+    mrc_code TEXT,
+    ref_no TEXT,
+    woreda TEXT,
+    zone TEXT,
+    region TEXT,
     status TEXT DEFAULT 'PENDING',
     assigned_to INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -45,6 +51,7 @@ db.exec(`
     due_date DATETIME,
     deadline_notified INTEGER DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (subcategory_id) REFERENCES categories(id),
     FOREIGN KEY (assigned_to) REFERENCES users(id),
     FOREIGN KEY (tax_center_id) REFERENCES tax_centers(id)
   );
@@ -64,8 +71,19 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS responses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     complaint_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER,
     message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id) REFERENCES complaints(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS assessments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    complaint_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    findings TEXT NOT NULL,
+    recommendation TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id),
     FOREIGN KEY (user_id) REFERENCES users(id)

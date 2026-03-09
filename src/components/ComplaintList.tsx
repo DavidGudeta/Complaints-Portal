@@ -11,13 +11,20 @@ import {
   Filter,
   Download,
   Trash2,
-  ClipboardCheck
+  ClipboardCheck,
+  Search,
+  Phone,
+  Mail,
+  Hash,
+  MapPin,
+  Tag,
+  Layers
 } from 'lucide-react';
 import { Complaint, ComplaintStatus, User as UserType, UserRole } from '../types';
 import { formatDate, cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AssessmentModal } from './modals/AssessmentModal';
 import { useComplaints } from '../hooks/useComplaints';
 
@@ -33,6 +40,7 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const { complaints, isLoading, fetchComplaints, deleteComplaint, assignComplaint } = useComplaints({ status, role, userId });
+  const [searchTerm, setSearchTerm] = useState('');
   const [officers, setOfficers] = useState<UserType[]>([]);
   const [assigningId, setAssigningId] = useState<number | null>(null);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
@@ -48,7 +56,13 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
     fetch('/api/admin/users')
       .then(res => res.json())
       .then(data => {
-        setOfficers(data.filter((u: UserType) => u.role === UserRole.OFFICER));
+        setOfficers(data.filter((u: UserType) => {
+          const isOfficer = u.role === UserRole.OFFICER;
+          if (currentUser?.role === UserRole.TEAM_LEADER) {
+            return isOfficer && u.tax_center_id === currentUser.tax_center_id;
+          }
+          return isOfficer;
+        }));
       });
   };
 
@@ -62,56 +76,153 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
   const getStatusColor = (status: ComplaintStatus) => {
     switch (status) {
       case ComplaintStatus.PENDING: return 'bg-amber-100 text-amber-700 border-amber-200';
-      case ComplaintStatus.IN_PROGRESS: return 'bg-blue-100 text-blue-700 border-blue-200';
-      case ComplaintStatus.CLOSED: return 'bg-zinc-100 text-zinc-700 border-zinc-200';
-      case ComplaintStatus.APPROVED: return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-zinc-100 text-zinc-700 border-zinc-200';
+      case ComplaintStatus.ASSIGNED: return 'bg-sky-50 text-sky-700 border-sky-100';
+      case ComplaintStatus.IN_PROGRESS: return 'bg-sky-100 text-sky-700 border-sky-200';
+      case ComplaintStatus.CLOSED: return 'bg-sky-50 text-sky-700 border-sky-100';
+      case ComplaintStatus.APPROVED: return 'bg-sky-100 text-sky-700 border-sky-200';
+      default: return 'bg-sky-50 text-sky-700 border-sky-100';
     }
   };
 
+  const filteredComplaints = complaints.filter(c => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      c.tracking_code.toLowerCase().includes(searchLower) ||
+      c.name.toLowerCase().includes(searchLower) ||
+      c.tin.toLowerCase().includes(searchLower) ||
+      c.subject.toLowerCase().includes(searchLower) ||
+      c.category_name?.toLowerCase().includes(searchLower) ||
+      c.assigned_name?.toLowerCase().includes(searchLower) ||
+      c.mrc_code?.toLowerCase().includes(searchLower) ||
+      c.email.toLowerCase().includes(searchLower) ||
+      c.phone.toLowerCase().includes(searchLower) ||
+      c.tax_center_name?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const stats = {
+    total: complaints.length,
+    pending: complaints.filter(c => c.status === ComplaintStatus.PENDING).length,
+    assigned: complaints.filter(c => c.status === ComplaintStatus.ASSIGNED).length,
+    inProgress: complaints.filter(c => c.status === ComplaintStatus.IN_PROGRESS).length,
+    closed: complaints.filter(c => c.status === ComplaintStatus.CLOSED).length,
+    categories: Array.from(new Set(complaints.map(c => c.category_name))).filter(Boolean).length
+  };
+
   return (
-    <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 md:p-12 min-h-full">
+    <div className="bg-white rounded-[2.5rem] border border-sky-100 shadow-sm p-8 md:p-12 min-h-full">
       <div className="space-y-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-zinc-900 tracking-tight italic serif">{title}</h1>
-            <p className="text-zinc-500 mt-2">Manage and review taxpayer complaints in this category.</p>
+            <h1 className="text-4xl font-bold text-sky-900 tracking-tight italic serif">{title}</h1>
+            <p className="text-sky-500 mt-2">Manage and review taxpayer complaints in this category.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold text-zinc-600 hover:bg-zinc-100 transition-all">
+            <button className="flex items-center gap-2 px-4 py-2 bg-sky-50 border border-sky-200 rounded-xl text-sm font-bold text-sky-600 hover:bg-sky-100 transition-all">
               <Filter size={16} /> Filter
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-950 text-white rounded-xl text-sm font-bold hover:bg-zinc-800 transition-all">
+            <button className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-xl text-sm font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100">
               <Download size={16} /> Export
             </button>
           </div>
         </div>
 
-        <div className="bg-zinc-50 rounded-3xl border border-zinc-100 overflow-hidden">
+        {/* Stats Panel */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-sky-50 border border-sky-100 p-5 rounded-3xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-white rounded-xl border border-sky-100 text-sky-400">
+                <FileText size={16} />
+              </div>
+              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Total</span>
+            </div>
+            <p className="text-2xl font-bold text-sky-900">{stats.total}</p>
+          </div>
+          <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-3xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-white rounded-xl border border-amber-100 text-amber-500">
+                <Clock size={16} />
+              </div>
+              <span className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest">Pending</span>
+            </div>
+            <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+          </div>
+          <div className="bg-sky-50/50 border border-sky-100 p-5 rounded-3xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-white rounded-xl border border-sky-100 text-sky-500">
+                <AlertCircle size={16} />
+              </div>
+              <span className="text-[10px] font-bold text-sky-600/60 uppercase tracking-widest">Active</span>
+            </div>
+            <p className="text-2xl font-bold text-sky-600">{stats.inProgress + stats.assigned}</p>
+          </div>
+          <div className="bg-emerald-50/50 border border-emerald-100 p-5 rounded-3xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-white rounded-xl border border-emerald-100 text-emerald-500">
+                <CheckCircle2 size={16} />
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">Closed</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{stats.closed}</p>
+          </div>
+          <div className="bg-sky-900 p-5 rounded-3xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-sky-800 rounded-xl border border-sky-700 text-sky-400">
+                <Layers size={16} />
+              </div>
+              <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">Categories</span>
+            </div>
+            <p className="text-2xl font-bold text-white">{stats.categories}</p>
+          </div>
+        </div>
+
+        <div className="bg-sky-50 rounded-3xl border border-sky-100 overflow-hidden">
+          <div className="p-6 border-b border-sky-200 bg-sky-100/50">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search complaints by ID, name, TIN or subject..." 
+                className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-sm focus:ring-1 focus:ring-sky-500 transition-all outline-none"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[1800px]">
               <thead>
-                <tr className="bg-zinc-100/50 border-b border-zinc-200">
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">Case ID</th>
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">Taxpayer</th>
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">Subject</th>
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">Assigned To</th>
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest">Date</th>
-                  <th className="px-6 py-4 text-xs font-bold text-zinc-400 uppercase tracking-widest text-right">Action</th>
+                <tr className="bg-sky-100/50 border-b border-sky-200">
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">TIN</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Complainant</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Email</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Phone</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Address</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Case ID</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">MRC Code</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Ref No</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Category</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Subcategory</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Subject</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Description</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Tax Center</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Status</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Applied Date</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Due Date</th>
+                  <th className="px-4 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200">
+              <tbody className="divide-y divide-sky-200">
                 {isLoading ? (
                   [1, 2, 3].map(i => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={7} className="px-6 py-8">
-                        <div className="h-4 bg-zinc-200 rounded w-full" />
+                      <td colSpan={17} className="px-4 py-8">
+                        <div className="h-4 bg-sky-200 rounded w-full" />
                       </td>
                     </tr>
                   ))
-                ) : complaints.length > 0 ? (
-                  complaints.map((c, i) => (
+                ) : filteredComplaints.length > 0 ? (
+                  filteredComplaints.map((c, i) => (
                       <motion.tr 
                         key={c.id}
                         initial={{ opacity: 0 }}
@@ -120,110 +231,95 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
                         onClick={() => navigate(`/cases/detail/${c.tracking_code}`)}
                         className="hover:bg-white transition-colors group cursor-pointer"
                       >
-                      <td className="px-6 py-5">
-                        <span className="font-mono font-bold text-zinc-900">{c.tracking_code}</span>
+                      <td className="px-4 py-5 font-mono text-xs text-sky-900">{c.tin}</td>
+                      <td className="px-4 py-5 text-sm font-bold text-sky-900">{c.name}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.email}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.phone}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">
+                        {c.woreda || c.zone || c.region ? (
+                          <span className="italic">
+                            {[c.woreda, c.zone, c.region].filter(Boolean).join(', ')}
+                          </span>
+                        ) : (
+                          <span className="text-sky-300">-</span>
+                        )}
                       </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-white border border-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-500">
-                            {c.name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-zinc-900">{c.name}</p>
-                            <p className="text-xs text-zinc-500">{c.tin}</p>
-                          </div>
-                        </div>
+                      <td className="px-4 py-5 font-mono font-bold text-sky-900">{c.tracking_code}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.mrc_code || <span className="text-sky-300">-</span>}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.ref_no || <span className="text-sky-300">-</span>}</td>
+                      <td className="px-4 py-5">
+                        <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider bg-sky-100 px-1.5 py-0.5 rounded">
+                          {c.category_name}
+                        </span>
                       </td>
-                      <td className="px-6 py-5">
-                        <p className="text-sm text-zinc-600 line-clamp-1">{c.subject}</p>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-1">{c.category_name}</p>
+                      <td className="px-4 py-5">
+                        <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider bg-sky-100 px-1.5 py-0.5 rounded">
+                          {c.subcategory_name || <span className="text-sky-300">-</span>}
+                        </span>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-4 py-5 text-sm text-sky-900 font-bold max-w-[200px] truncate">{c.subject}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500 max-w-[250px] truncate italic">{c.description}</td>
+                      <td className="px-4 py-5">
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded">
+                          {c.tax_center_name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-5">
                         <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", getStatusColor(c.status))}>
                           {c.status}
                         </span>
                       </td>
-                      <td className="px-6 py-5">
-                        {(currentUser?.role === UserRole.TEAM_LEADER || currentUser?.role === UserRole.DIRECTOR) ? (
-                          <div className="relative">
-                            <select
-                              disabled={assigningId === c.id}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleAssign(c.id, e.target.value);
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-xs bg-white border border-zinc-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer disabled:opacity-50 w-full max-w-[140px]"
-                              value={c.assigned_to || ""}
-                            >
-                              <option value="" disabled>Assign to...</option>
-                              {officers.map(off => (
-                                <option key={off.id} value={off.id}>{off.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                        ) : c.assigned_name ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-blue-600">
-                              {c.assigned_name.charAt(0)}
-                            </div>
-                            <span className="text-sm text-zinc-600">{c.assigned_name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-zinc-400 italic">Unassigned</span>
-                        )}
+                      <td className="px-4 py-5 text-xs text-sky-900">{formatDate(c.created_at).split(',')[0]}</td>
+                      <td className="px-4 py-5 text-xs text-sky-900">
+                        {c.due_date ? formatDate(c.due_date).split(',')[0] : <span className="text-sky-300">-</span>}
                       </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2 text-zinc-500">
-                          <Calendar size={14} />
-                          <span className="text-xs">{formatDate(c.created_at).split(',')[0]}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {(currentUser?.role === UserRole.TEAM_LEADER || currentUser?.role === UserRole.OFFICER) && 
-                           (c.status === ComplaintStatus.ASSIGNED || c.status === ComplaintStatus.IN_PROGRESS) && (
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedComplaintId(c.id);
-                                setIsAssessmentModalOpen(true);
-                              }}
-                              className="p-2 text-zinc-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-                              title="Add Assessment"
-                            >
-                              <ClipboardCheck size={18} />
-                            </button>
-                          )}
+                      <td className="px-4 py-5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cases/detail/${c.tracking_code}`);
+                            }}
+                            className="p-1.5 text-sky-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all"
+                            title="Edit Case"
+                          >
+                            <FileText size={16} />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cases/detail/${c.tracking_code}`);
+                            }}
+                            className="p-1.5 text-sky-400 hover:text-sky-900 hover:bg-sky-100 rounded-lg transition-all"
+                            title="View Details"
+                          >
+                            <ArrowRight size={16} />
+                          </button>
                           {(currentUser?.role === UserRole.DIRECTOR || currentUser?.role === UserRole.TEAM_LEADER) && (
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteComplaint(c.id);
                               }}
-                              className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              className="p-1.5 text-sky-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              title="Delete Case"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={16} />
                             </button>
                           )}
-                          <Link 
-                            to={`/cases/detail/${c.tracking_code}`}
-                            className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-white rounded-lg transition-all inline-block"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ArrowRight size={18} />
-                          </Link>
                         </div>
                       </td>
                     </motion.tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-300 border border-zinc-100">
+                    <td colSpan={17} className="px-4 py-20 text-center">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-sky-300 border border-sky-100">
                         <FileText size={32} />
                       </div>
-                      <p className="text-zinc-400 font-medium">No complaints found in this category.</p>
+                      <p className="text-sky-400 font-medium">
+                        {searchTerm ? "No complaints found matching your search." : "No complaints found in this category."}
+                      </p>
                     </td>
                   </tr>
                 )}

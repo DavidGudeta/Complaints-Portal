@@ -71,3 +71,21 @@ export const changePassword = (req: any, res: any) => {
   db.prepare("UPDATE users SET password = ? WHERE id = ?").run(newPassword, id);
   res.json({ success: true });
 };
+
+export const getPerformanceStats = (req: any, res: any) => {
+  const stats = db.prepare(`
+    SELECT 
+      u.id, 
+      u.name, 
+      u.role, 
+      tc.name as tax_center_name,
+      COUNT(c.id) as complaint_count
+    FROM users u
+    LEFT JOIN tax_centers tc ON u.tax_center_id = tc.id
+    LEFT JOIN complaints c ON u.id = c.assigned_to
+    WHERE u.role IN ('OFFICER', 'TEAM_LEADER')
+    GROUP BY u.id
+    ORDER BY complaint_count DESC
+  `).all();
+  res.json(stats);
+};

@@ -132,116 +132,118 @@ export function UserManagement() {
   );
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-zinc-900 tracking-tight italic serif">User Management</h1>
-          <p className="text-zinc-500">Create and manage internal staff accounts.</p>
-        </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-6 py-3 bg-zinc-950 text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
-        >
-          <UserPlus size={20} /> Add New User
-        </button>
-      </div>
-
-      <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-zinc-50 bg-zinc-50/50">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by name, email or role..." 
-              className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:ring-1 focus:ring-blue-500 transition-all outline-none"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
+    <div className="bg-white rounded-[2.5rem] border border-sky-100 shadow-sm p-8 md:p-12 min-h-full">
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-sky-900 tracking-tight italic serif">User Management</h1>
+            <p className="text-sky-500 mt-2">Create and manage internal staff accounts.</p>
           </div>
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-6 py-3 bg-sky-600 text-white rounded-2xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-100"
+          >
+            <UserPlus size={20} /> Add New User
+          </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] font-bold uppercase tracking-widest border-b border-zinc-50">
-                <th className="px-6 py-4">User</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Tax Center</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-50">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
-                  </td>
+        <div className="bg-sky-50 rounded-3xl border border-sky-100 overflow-hidden">
+          <div className="p-6 border-b border-sky-200 bg-sky-100/50">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by name, email or role..." 
+                className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-sm focus:ring-1 focus:ring-sky-500 transition-all outline-none"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-sky-100/50 text-sky-400 text-[10px] font-bold uppercase tracking-widest border-b border-sky-200">
+                  <th className="px-6 py-4">User</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Tax Center</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-zinc-400">
-                    No users found matching your search.
-                  </td>
-                </tr>
-              ) : filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-zinc-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-600 font-bold">
-                        {u.name.charAt(0)}
+              </thead>
+              <tbody className="divide-y divide-sky-200">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-sky-600 mx-auto" />
+                    </td>
+                  </tr>
+                ) : filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-sky-400">
+                      No users found matching your search.
+                    </td>
+                  </tr>
+                ) : filteredUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-white transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold border border-sky-200">
+                          {u.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-sky-900">{u.name}</p>
+                          <p className="text-xs text-sky-500">{u.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-zinc-900">{u.name}</p>
-                        <p className="text-xs text-zinc-500">{u.email}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
+                        u.role === UserRole.ADMIN ? "bg-purple-50 text-purple-600 border-purple-100" :
+                        u.role === UserRole.DIRECTOR ? "bg-sky-50 text-sky-600 border-sky-100" :
+                        u.role === UserRole.TEAM_LEADER ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                        "bg-sky-50 text-sky-600 border-sky-100"
+                      )}>
+                        {u.role.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-sky-600">
+                      {u.tax_center_name || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleOpenModal(u)}
+                          className="p-2 text-sky-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(u.id)}
+                          className="p-2 text-sky-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={cn(
-                      "px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
-                      u.role === UserRole.ADMIN ? "bg-purple-50 text-purple-600 border-purple-100" :
-                      u.role === UserRole.DIRECTOR ? "bg-blue-50 text-blue-600 border-blue-100" :
-                      u.role === UserRole.TEAM_LEADER ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                      "bg-zinc-50 text-zinc-600 border-zinc-100"
-                    )}>
-                      {u.role.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-zinc-600">
-                    {u.tax_center_name || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => handleOpenModal(u)}
-                        className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(u.id)}
-                        className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* User Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-zinc-950/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-zinc-100 overflow-hidden">
-            <div className="px-8 py-6 border-b border-zinc-50 flex items-center justify-between bg-zinc-50/50">
-              <h2 className="text-xl font-bold text-zinc-900 italic serif">
+        <div className="fixed inset-0 bg-sky-950/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-sky-100 overflow-hidden">
+            <div className="px-8 py-6 border-b border-sky-50 flex items-center justify-between bg-sky-50/50">
+              <h2 className="text-xl font-bold text-sky-900 italic serif">
                 {editingUser ? 'Edit User' : 'Add New User'}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-zinc-400 hover:text-zinc-900 transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-sky-400 hover:text-sky-900 transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -255,24 +257,24 @@ export function UserManagement() {
               )}
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Full Name</label>
+                <label className="text-xs font-bold text-sky-500 uppercase tracking-widest">Full Name</label>
                 <input 
                   required
                   type="text"
-                  className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Email Address</label>
+                <label className="text-xs font-bold text-sky-500 uppercase tracking-widest">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
                   <input 
                     required
                     type="email"
-                    className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all"
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                   />
@@ -281,11 +283,11 @@ export function UserManagement() {
 
               {!editingUser && (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Initial Password</label>
+                  <label className="text-xs font-bold text-sky-500 uppercase tracking-widest">Initial Password</label>
                   <input 
                     required
                     type="password"
-                    className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all"
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                   />
@@ -294,11 +296,11 @@ export function UserManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Role</label>
+                  <label className="text-xs font-bold text-sky-500 uppercase tracking-widest">Role</label>
                   <div className="relative">
-                    <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
                     <select 
-                      className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all appearance-none"
+                      className="w-full pl-12 pr-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all appearance-none"
                       value={formData.role}
                       onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
                     >
@@ -310,11 +312,11 @@ export function UserManagement() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Tax Center</label>
+                  <label className="text-xs font-bold text-sky-500 uppercase tracking-widest">Tax Center</label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
                     <select 
-                      className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none transition-all appearance-none"
+                      className="w-full pl-12 pr-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all appearance-none"
                       value={formData.tax_center_id}
                       onChange={e => setFormData({ ...formData, tax_center_id: e.target.value })}
                     >
@@ -331,14 +333,14 @@ export function UserManagement() {
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-4 bg-zinc-50 text-zinc-600 rounded-2xl font-bold hover:bg-zinc-100 transition-all"
+                  className="flex-1 py-4 bg-sky-50 text-sky-600 rounded-2xl font-bold hover:bg-sky-100 transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-4 bg-zinc-950 text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-zinc-200"
+                  className="flex-1 py-4 bg-sky-600 text-white rounded-2xl font-bold hover:bg-sky-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-100"
                 >
                   {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20} /> {editingUser ? 'Update User' : 'Create User'}</>}
                 </button>

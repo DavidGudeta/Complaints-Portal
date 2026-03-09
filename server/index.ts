@@ -22,6 +22,7 @@ async function startServer() {
   const wss = new WebSocketServer({ server: httpServer });
   
   app.use(express.json());
+  app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
   // WebSocket connection handling
   wss.on("connection", (ws, req) => {

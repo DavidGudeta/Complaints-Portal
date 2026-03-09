@@ -38,7 +38,12 @@ export function ComplaintDetail() {
     tin: '',
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    mrc_code: '',
+    ref_no: '',
+    woreda: '',
+    zone: '',
+    region: ''
   });
 
   useEffect(() => {
@@ -56,7 +61,12 @@ export function ComplaintDetail() {
       tin: data.tin,
       name: data.name,
       email: data.email,
-      phone: data.phone
+      phone: data.phone,
+      mrc_code: data.mrc_code || '',
+      ref_no: data.ref_no || '',
+      woreda: data.woreda || '',
+      zone: data.zone || '',
+      region: data.region || ''
     });
   };
 
@@ -97,7 +107,8 @@ export function ComplaintDetail() {
   if (!complaint) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 md:p-12 min-h-full">
+      <div className="space-y-8">
       <div className="flex items-center gap-4">
         <button 
           onClick={() => navigate(-1)}
@@ -179,6 +190,42 @@ export function ComplaintDetail() {
                     {complaint.description}
                   </p>
                 )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-zinc-50">
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Category</h3>
+                  <p className="text-sm font-bold text-zinc-900">{complaint.category_name}</p>
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Subcategory</h3>
+                  <p className="text-sm font-bold text-zinc-900">{complaint.subcategory_name || '-'}</p>
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">MRC Code</h3>
+                  {isEditing ? (
+                    <input 
+                      type="text"
+                      className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-all text-sm"
+                      value={editData.mrc_code}
+                      onChange={e => setEditData({ ...editData, mrc_code: e.target.value })}
+                    />
+                  ) : (
+                    <p className="text-sm font-bold text-zinc-900">{complaint.mrc_code || '-'}</p>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Reference Number</h3>
+                  {isEditing ? (
+                    <input 
+                      type="text"
+                      className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-all text-sm"
+                      value={editData.ref_no}
+                      onChange={e => setEditData({ ...editData, ref_no: e.target.value })}
+                    />
+                  ) : (
+                    <p className="text-sm font-bold text-zinc-900">{complaint.ref_no || '-'}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -349,6 +396,50 @@ export function ComplaintDetail() {
                     <span className="text-zinc-900 font-medium">{complaint.phone}</span>
                   )}
                 </div>
+                <div className="pt-4 border-t border-zinc-50">
+                  <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Address</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500">Region</span>
+                      {isEditing ? (
+                        <input 
+                          type="text"
+                          className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-right text-xs"
+                          value={editData.region}
+                          onChange={e => setEditData({ ...editData, region: e.target.value })}
+                        />
+                      ) : (
+                        <span className="text-zinc-900">{complaint.region || '-'}</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500">Zone/Sub-City</span>
+                      {isEditing ? (
+                        <input 
+                          type="text"
+                          className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-right text-xs"
+                          value={editData.zone}
+                          onChange={e => setEditData({ ...editData, zone: e.target.value })}
+                        />
+                      ) : (
+                        <span className="text-zinc-900">{complaint.zone || '-'}</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500">Woreda</span>
+                      {isEditing ? (
+                        <input 
+                          type="text"
+                          className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-right text-xs"
+                          value={editData.woreda}
+                          onChange={e => setEditData({ ...editData, woreda: e.target.value })}
+                        />
+                      ) : (
+                        <span className="text-zinc-900">{complaint.woreda || '-'}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -370,6 +461,7 @@ export function ComplaintDetail() {
         complaintId={complaint.id}
         userId={user!.id}
       />
+      </div>
     </div>
   );
 }
