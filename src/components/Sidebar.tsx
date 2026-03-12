@@ -192,14 +192,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
       )}>
         <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl tracking-tight overflow-hidden whitespace-nowrap">
           <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1.5 shrink-0 shadow-sm">
-            <img 
-              src="https://revenue.gov.et/wp-content/uploads/2021/08/cropped-LOGO-1-192x192.png" 
-              alt="Ministry of Revenues Logo" 
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
+            <ShieldCheck size={28} className="text-sky-600" />
           </div>
-          {!isCollapsed && <span>Complaints portal</span>}
+          {!isCollapsed && <span className="text-lg">Ministry of Revenues</span>}
         </Link>
         <button 
           onClick={onClose}

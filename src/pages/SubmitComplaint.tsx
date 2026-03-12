@@ -15,7 +15,8 @@ import {
   ArrowLeft,
   Hash,
   X,
-  File as FileIcon
+  File as FileIcon,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ComplaintCategory } from '../types';
@@ -148,6 +149,9 @@ export function SubmitComplaint() {
           </Link>
         </div>
         <div className="text-center mb-12">
+          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-2 mx-auto mb-6 shadow-xl shadow-sky-100 border border-sky-50">
+            <ShieldCheck size={40} className="text-sky-600" />
+          </div>
           <h1 className="text-4xl font-bold text-sky-900 tracking-tight mb-2 italic serif">Submit a Complaint</h1>
           <p className="text-sky-500">Please follow the steps below to file your complaint with the portal.</p>
         </div>

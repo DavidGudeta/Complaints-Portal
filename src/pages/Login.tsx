@@ -30,14 +30,9 @@ export function Login() {
       <div className="max-w-md w-full">
         <div className="text-center mb-12">
           <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center p-2.5 mx-auto mb-6 shadow-xl shadow-sky-100 border border-sky-50">
-            <img 
-              src="https://revenue.gov.et/wp-content/uploads/2021/08/cropped-LOGO-1-192x192.png" 
-              alt="Ministry of Revenues Logo" 
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
+            <ShieldCheck size={48} className="text-sky-600" />
           </div>
-          <h1 className="text-3xl font-bold text-sky-900 tracking-tight mb-2 italic serif">Complaints portal</h1>
+          <h1 className="text-3xl font-bold text-sky-900 tracking-tight mb-2 italic serif">Ministry of Revenues</h1>
           <p className="text-sky-500">Sign in to access the management portal.</p>
         </div>
 

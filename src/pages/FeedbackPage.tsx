@@ -54,7 +54,7 @@ export function FeedbackPage() {
           </div>
           <h1 className="text-4xl font-bold text-zinc-900 tracking-tight mb-4 italic serif">Share Your Feedback</h1>
           <p className="text-zinc-500">
-            How was your experience with the complaints portal? Let us know how we can improve.
+            How was your experience with the Ministry of Revenues portal? Let us know how we can improve.
           </p>
         </div>
 

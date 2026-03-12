@@ -152,7 +152,7 @@ export function RoleManagement() {
             <ShieldCheck className="text-sky-400 mb-6" size={48} />
             <h2 className="text-3xl font-bold italic serif mb-4">Security & Access Control</h2>
             <p className="text-sky-200 leading-relaxed mb-8">
-              The TaxGuard portal uses a strict Role-Based Access Control (RBAC) system. 
+              The Ministry of Revenues portal uses a strict Role-Based Access Control (RBAC) system. 
               Permissions are enforced both at the UI level (hiding menus) and at the API level (data filtering). 
               System roles are currently static to ensure organizational integrity.
             </p>

@@ -72,7 +72,7 @@ export function Dashboard() {
           <div>
             <h1 className="text-4xl font-bold text-sky-900 tracking-tight italic serif">Welcome back, {user?.name.split(' ')[0]}</h1>
             <p className="text-sky-500 mt-2 text-lg">
-              {user?.role === UserRole.DIRECTOR && "Global overview of the Ministry's complaints portal."}
+              {user?.role === UserRole.DIRECTOR && "Global overview of the Ministry of Revenues."}
               {user?.role === UserRole.TEAM_LEADER && `Overview for ${user.tax_center_name || 'your tax center'}.`}
               {user?.role === UserRole.OFFICER && "Your personal workload and performance metrics."}
             </p>

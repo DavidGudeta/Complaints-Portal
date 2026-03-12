@@ -9,14 +9,9 @@ export function LandingPage() {
       <header className="h-20 border-b border-sky-100 flex items-center justify-between px-8 md:px-16 sticky top-0 bg-white/80 backdrop-blur-md z-50">
         <div className="flex items-center gap-4 text-sky-900 font-bold text-2xl tracking-tight">
           <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg shadow-sky-100 border border-sky-50">
-            <img 
-              src="https://revenue.gov.et/wp-content/uploads/2021/08/cropped-LOGO-1-192x192.png" 
-              alt="Ministry of Revenues Logo" 
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
+            <ShieldCheck size={32} className="text-sky-600" />
           </div>
-          Complaints portal
+          Ministry of Revenues
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-sky-500">
           <Link to="/contact" className="hover:text-sky-900 transition-colors">Contact</Link>
@@ -89,14 +84,9 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4 text-sky-900 font-bold text-xl tracking-tight">
             <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center p-1.5 border border-sky-50 shadow-sm">
-              <img 
-                src="https://revenue.gov.et/wp-content/uploads/2021/08/cropped-LOGO-1-192x192.png" 
-                alt="Ministry of Revenues Logo" 
-                className="w-full h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
+              <ShieldCheck size={28} className="text-sky-600" />
             </div>
-            Complaints portal
+            Ministry of Revenues
           </div>
           <p className="text-sm text-sky-400">© 2026 Ethiopian Ministry of Revenues. All rights reserved.</p>
           <div className="flex items-center gap-6 text-sm font-bold text-sky-500">

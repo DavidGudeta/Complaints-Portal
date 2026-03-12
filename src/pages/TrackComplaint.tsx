@@ -148,6 +148,9 @@ export function TrackComplaint() {
           </Link>
         </div>
         <div className="text-center mb-12">
+          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-2 mx-auto mb-6 shadow-xl shadow-sky-100 border border-sky-50">
+            <Search size={40} className="text-sky-600" />
+          </div>
           <h1 className="text-4xl font-bold text-sky-900 tracking-tight mb-2 italic serif">Track Your Complaint</h1>
           <p className="text-sky-500">Enter your unique tracking code to view the status and history of your case.</p>
         </div>

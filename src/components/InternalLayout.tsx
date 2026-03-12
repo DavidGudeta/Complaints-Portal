@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Navigate, Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Search, User, Settings, Shield, Menu, X, Building2, Users, Tag, CheckCircle2 } from 'lucide-react';
+import { LogOut, Search, User, Settings, Shield, Menu, X, Building2, Users, Tag, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { cn } from '../lib/utils';
 import { UserRole } from '../types';
@@ -68,6 +68,12 @@ export function InternalLayout() {
             >
               <Menu size={20} />
             </button>
+
+            <div className="flex items-center gap-2 lg:hidden">
+              <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center p-0.5 shadow-sm border border-sky-100">
+                <ShieldCheck size={20} className="text-sky-600" />
+              </div>
+            </div>
             
             <div className="relative w-full hidden sm:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
@@ -143,37 +149,6 @@ export function InternalLayout() {
                       <User size={18} className="text-sky-400 group-hover:text-sky-600" />
                       My Profile
                     </Link>
-
-                    {user.role === UserRole.DIRECTOR && (
-                      <>
-                        <div className="h-px bg-sky-50 my-1 mx-2" />
-                        <p className="px-3 py-1 text-[10px] font-bold text-sky-400 uppercase tracking-widest">System Settings</p>
-                        <Link 
-                          to="/settings/categories" 
-                          className="flex items-center gap-3 px-3 py-2 text-sm text-sky-600 hover:bg-sky-50 hover:text-sky-900 rounded-xl transition-all group"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <Tag size={18} className="text-sky-400 group-hover:text-sky-600" />
-                          Complaint Categories
-                        </Link>
-                        <Link 
-                          to="/settings/subcategories" 
-                          className="flex items-center gap-3 px-3 py-2 text-sm text-sky-600 hover:bg-sky-50 hover:text-sky-900 rounded-xl transition-all group"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <Tag size={18} className="text-sky-400 group-hover:text-sky-600" />
-                          Subcategories
-                        </Link>
-                        <Link 
-                          to="/settings/status" 
-                          className="flex items-center gap-3 px-3 py-2 text-sm text-sky-600 hover:bg-sky-50 hover:text-sky-900 rounded-xl transition-all group"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <CheckCircle2 size={18} className="text-sky-400 group-hover:text-sky-600" />
-                          System Statuses
-                        </Link>
-                      </>
-                    )}
 
                     {user.role === UserRole.ADMIN && (
                       <>

@@ -18,7 +18,8 @@ import {
   Hash,
   MapPin,
   Tag,
-  Layers
+  Layers,
+  Plus
 } from 'lucide-react';
 import { Complaint, ComplaintStatus, User as UserType, UserRole } from '../types';
 import { formatDate, cn } from '../lib/utils';
@@ -118,6 +119,14 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
             <p className="text-sky-500 mt-2">Manage and review taxpayer complaints in this category.</p>
           </div>
           <div className="flex items-center gap-3">
+            {isAllComplaints && (
+              <button 
+                onClick={() => navigate('/submit')}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
+              >
+                <Plus size={16} /> Add Complaint
+              </button>
+            )}
             <button className="flex items-center gap-2 px-4 py-2 bg-sky-50 border border-sky-200 rounded-xl text-sm font-bold text-sky-600 hover:bg-sky-100 transition-all">
               <Filter size={16} /> Filter
             </button>
