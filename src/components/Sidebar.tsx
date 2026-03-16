@@ -66,12 +66,14 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
               { title: 'All Complaints', href: '/cases/all' },
               { title: 'All Assessment', href: '/cases/assessment' },
               { title: 'All Response', href: '/cases/response' },
+              { title: 'Approval', href: '/cases/approval' },
             ]
           },
           {
             title: 'Manage',
             icon: <ClipboardList size={20} />,
             children: [
+              { title: 'Assign Complaints', href: '/manage/assign' },
               { title: 'Assigned Complaints', href: '/manage/assigned' },
               { title: 'Unassigned Complaints', href: '/manage/unassigned' },
               { title: 'Closed Complaints', href: '/manage/closed' },
@@ -117,8 +119,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             icon: <ClipboardList size={20} />,
             children: [
               { title: 'Assign Complaints', href: '/manage/assign' },
+              { title: 'Assigned Complaints', href: '/manage/assigned' },
               { title: 'Unassigned Complaints', href: '/manage/unassigned' },
               { title: 'Closed Complaints', href: '/manage/closed' },
+              { title: 'Reopened Complaints', href: '/manage/reopened' },
             ]
           },
           {
@@ -168,9 +172,23 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
       case UserRole.ADMIN:
         return [
           ...base,
+          {
+            title: 'Cases',
+            icon: <FileText size={20} />,
+            children: [
+              { title: 'All Complaints', href: '/cases/all' },
+            ]
+          },
           { title: 'User Management', icon: <Users size={20} />, href: '/admin/users' },
           { title: 'Role Management', icon: <ShieldCheck size={20} />, href: '/admin/roles' },
           { title: 'Tax Center Management', icon: <Building2 size={20} />, href: '/admin/tax-centers' }
+        ];
+
+      case UserRole.TAXPAYER:
+        return [
+          ...base,
+          { title: 'Submit Complaint', icon: <FileText size={20} />, href: '/submit' },
+          { title: 'Track Complaint', icon: <ClipboardList size={20} />, href: '/track' },
         ];
 
       default:

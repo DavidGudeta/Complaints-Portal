@@ -41,67 +41,112 @@ export function ComplaintDetail() {
     phone: '',
     mrc_code: '',
     ref_no: '',
-    woreda: '',
-    zone: '',
-    region: ''
+    enterprise_address: '',
+    customer_address: ''
   });
+
+  const fetchComplaint = async () => {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/internal/complaints/${id}`);
+      const data = await res.json();
+      setComplaint(data);
+      setEditData({
+        subject: data.COMPLAINTS_TITLE,
+        description: data.COMPLAIN_DETAILS,
+        tin: data.TIN,
+        name: data.COMPLAINANT_NAME,
+        email: data.COMPLAINANT_EMAIL || '',
+        phone: data.COMPLAINANT_PHONE,
+        mrc_code: data.MACHINE_CODE || '',
+        ref_no: data.REFERENCE_NO || '',
+        enterprise_address: data.ENTERPRISE_ADDRESS || '',
+        customer_address: data.CUSTOMER_ADDRESS || ''
+      });
+    } catch (error) {
+      console.error('Failed to fetch complaint:', error);
+    }
+  };
+
+  const fetchOfficers = async () => {
+    try {
+      const res = await fetch('/api/admin/users?role=OFFICER');
+      const data = await res.json();
+      setOfficers(data);
+    } catch (error) {
+      console.error('Failed to fetch officers:', error);
+    }
+  };
 
   useEffect(() => {
     fetchComplaint();
-    fetchOfficers();
-  }, [id]);
-
-  const fetchComplaint = async () => {
-    const res = await fetch(`/api/complaints/track/${id}`);
-    const data = await res.json();
-    setComplaint(data);
-    setEditData({
-      subject: data.subject,
-      description: data.description,
-      tin: data.tin,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      mrc_code: data.mrc_code || '',
-      ref_no: data.ref_no || '',
-      woreda: data.woreda || '',
-      zone: data.zone || '',
-      region: data.region || ''
-    });
-  };
-
-  const fetchOfficers = () => {
-    fetch('/api/admin/users').then(res => res.json()).then(data => {
-      setOfficers(data.filter((u: UserType) => u.role === UserRole.OFFICER));
-    });
-  };
+    if (user?.role === UserRole.DIRECTOR || user?.role === UserRole.TEAM_LEADER) {
+      fetchOfficers();
+    }
+  }, [id, user]);
 
   const handleStatusUpdate = async (status: ComplaintStatus) => {
-    await fetch(`/api/internal/complaints/${complaint?.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
-    });
-    fetchComplaint();
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/internal/complaints/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        fetchComplaint();
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
   };
 
-  const handleAssign = async (officerId: number) => {
-    await fetch(`/api/internal/complaints/${complaint?.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assigned_to: officerId, status: ComplaintStatus.ASSIGNED })
-    });
-    fetchComplaint();
+  const handleAssign = async (officerId: string) => {
+    if (!id) return;
+    const officer = officers.find(o => o.id === officerId);
+    try {
+      const res = await fetch(`/api/internal/complaints/${id}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          officerId,
+          officerName: officer?.name || 'Unknown Officer'
+        })
+      });
+      if (res.ok) {
+        fetchComplaint();
+      }
+    } catch (error) {
+      console.error('Failed to assign officer:', error);
+    }
   };
 
   const handleSaveEdit = async () => {
-    await fetch(`/api/internal/complaints/${complaint?.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editData)
-    });
-    setIsEditing(false);
-    fetchComplaint();
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/internal/complaints/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          COMPLAINTS_TITLE: editData.subject,
+          COMPLAIN_DETAILS: editData.description,
+          TIN: editData.tin,
+          COMPLAINANT_NAME: editData.name,
+          COMPLAINANT_EMAIL: editData.email,
+          COMPLAINANT_PHONE: editData.phone,
+          MACHINE_CODE: editData.mrc_code,
+          REFERENCE_NO: editData.ref_no,
+          ENTERPRISE_ADDRESS: editData.enterprise_address,
+          CUSTOMER_ADDRESS: editData.customer_address
+        })
+      });
+      if (res.ok) {
+        setIsEditing(false);
+        fetchComplaint();
+      }
+    } catch (error) {
+      console.error('Failed to save edits:', error);
+    }
   };
 
   if (!complaint) return null;
@@ -118,9 +163,9 @@ export function ComplaintDetail() {
         </button>
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-bold text-zinc-900 tracking-tight italic serif">Case {complaint.tracking_code}</h1>
+            <h1 className="text-3xl font-bold text-zinc-900 tracking-tight italic serif">Case {complaint.COMPLAINT_CODE}</h1>
             <span className="px-3 py-1 bg-zinc-100 text-zinc-600 rounded-full text-xs font-bold border border-zinc-200">
-              {complaint.status}
+              {complaint.CASE_STATUS}
             </span>
             {(user?.role === UserRole.DIRECTOR || user?.role === UserRole.TEAM_LEADER) && !isEditing && (
               <button 
@@ -150,7 +195,7 @@ export function ComplaintDetail() {
               </div>
             )}
           </div>
-          <p className="text-zinc-500">Submitted by {complaint.name} on {formatDate(complaint.created_at)}</p>
+          <p className="text-zinc-500">Submitted by {complaint.COMPLAINANT_NAME} on {formatDate(complaint.APPLIED_DATE)}</p>
         </div>
       </div>
 
@@ -173,7 +218,7 @@ export function ComplaintDetail() {
                     onChange={e => setEditData({ ...editData, subject: e.target.value })}
                   />
                 ) : (
-                  <p className="text-lg font-bold text-zinc-900">{complaint.subject}</p>
+                  <p className="text-lg font-bold text-zinc-900">{complaint.COMPLAINTS_TITLE}</p>
                 )}
               </div>
               <div>
@@ -187,7 +232,7 @@ export function ComplaintDetail() {
                   />
                 ) : (
                   <p className="text-zinc-600 leading-relaxed bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
-                    {complaint.description}
+                    {complaint.COMPLAIN_DETAILS}
                   </p>
                 )}
               </div>
@@ -210,7 +255,7 @@ export function ComplaintDetail() {
                       onChange={e => setEditData({ ...editData, mrc_code: e.target.value })}
                     />
                   ) : (
-                    <p className="text-sm font-bold text-zinc-900">{complaint.mrc_code || '-'}</p>
+                    <p className="text-sm font-bold text-zinc-900">{complaint.MACHINE_CODE || '-'}</p>
                   )}
                 </div>
                 <div>
@@ -223,7 +268,7 @@ export function ComplaintDetail() {
                       onChange={e => setEditData({ ...editData, ref_no: e.target.value })}
                     />
                   ) : (
-                    <p className="text-sm font-bold text-zinc-900">{complaint.ref_no || '-'}</p>
+                    <p className="text-sm font-bold text-zinc-900">{complaint.REFERENCE_NO || '-'}</p>
                   )}
                 </div>
               </div>
@@ -287,13 +332,13 @@ export function ComplaintDetail() {
                 <div className="space-y-4">
                   <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Assign to Officer</p>
                   <select
-                    onChange={(e) => handleAssign(parseInt(e.target.value))}
+                    onChange={(e) => handleAssign(e.target.value)}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
-                    value={complaint.assigned_to || ""}
+                    value={complaint.assigned_id || ""}
                   >
                     <option value="" disabled>Select Officer...</option>
                     {officers.map(off => (
-                      <option key={off.id} value={off.id}>{off.name}</option>
+                      <option key={off.uid || off.id} value={off.uid || off.id}>{off.displayName || off.name}</option>
                     ))}
                   </select>
                 </div>
@@ -363,8 +408,8 @@ export function ComplaintDetail() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-sm font-bold text-zinc-900">{complaint.name}</p>
-                      <p className="text-xs text-zinc-500">TIN: {complaint.tin}</p>
+                      <p className="text-sm font-bold text-zinc-900">{complaint.COMPLAINANT_NAME}</p>
+                      <p className="text-xs text-zinc-500">TIN: {complaint.TIN}</p>
                     </>
                   )}
                 </div>
@@ -380,7 +425,7 @@ export function ComplaintDetail() {
                       onChange={e => setEditData({ ...editData, email: e.target.value })}
                     />
                   ) : (
-                    <span className="text-zinc-900 font-medium">{complaint.email}</span>
+                    <span className="text-zinc-900 font-medium">{complaint.COMPLAINANT_EMAIL}</span>
                   )}
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -393,49 +438,36 @@ export function ComplaintDetail() {
                       onChange={e => setEditData({ ...editData, phone: e.target.value })}
                     />
                   ) : (
-                    <span className="text-zinc-900 font-medium">{complaint.phone}</span>
+                    <span className="text-zinc-900 font-medium">{complaint.COMPLAINANT_PHONE}</span>
                   )}
                 </div>
                 <div className="pt-4 border-t border-zinc-50">
                   <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Address</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-500">Region</span>
+                      <span className="text-zinc-500">Enterprise Address</span>
                       {isEditing ? (
                         <input 
                           type="text"
                           className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-right text-xs"
-                          value={editData.region}
-                          onChange={e => setEditData({ ...editData, region: e.target.value })}
+                          value={editData.enterprise_address}
+                          onChange={e => setEditData({ ...editData, enterprise_address: e.target.value })}
                         />
                       ) : (
-                        <span className="text-zinc-900">{complaint.region || '-'}</span>
+                        <span className="text-zinc-900">{complaint.ENTERPRISE_ADDRESS || '-'}</span>
                       )}
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-500">Zone/Sub-City</span>
+                      <span className="text-zinc-500">Customer Address</span>
                       {isEditing ? (
                         <input 
                           type="text"
                           className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-right text-xs"
-                          value={editData.zone}
-                          onChange={e => setEditData({ ...editData, zone: e.target.value })}
+                          value={editData.customer_address}
+                          onChange={e => setEditData({ ...editData, customer_address: e.target.value })}
                         />
                       ) : (
-                        <span className="text-zinc-900">{complaint.zone || '-'}</span>
-                      )}
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-zinc-500">Woreda</span>
-                      {isEditing ? (
-                        <input 
-                          type="text"
-                          className="px-3 py-1 bg-zinc-50 border border-zinc-200 rounded-lg text-right text-xs"
-                          value={editData.woreda}
-                          onChange={e => setEditData({ ...editData, woreda: e.target.value })}
-                        />
-                      ) : (
-                        <span className="text-zinc-900">{complaint.woreda || '-'}</span>
+                        <span className="text-zinc-900">{complaint.CUSTOMER_ADDRESS || '-'}</span>
                       )}
                     </div>
                   </div>
@@ -449,16 +481,16 @@ export function ComplaintDetail() {
       <AssessmentModal 
         isOpen={isAssessmentModalOpen} 
         onClose={() => setIsAssessmentModalOpen(false)} 
-        onSuccess={() => fetchComplaint()} 
-        complaintId={complaint.id}
+        onSuccess={() => {}} 
+        complaintId={complaint.COMPLAINTS_ID}
         userId={user!.id}
       />
 
       <ResponseModal 
         isOpen={isResponseModalOpen} 
         onClose={() => setIsResponseModalOpen(false)} 
-        onSuccess={() => fetchComplaint()} 
-        complaintId={complaint.id}
+        onSuccess={() => {}} 
+        complaintId={complaint.COMPLAINTS_ID}
         userId={user!.id}
       />
       </div>

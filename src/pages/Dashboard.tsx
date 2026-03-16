@@ -26,12 +26,31 @@ export function Dashboard() {
     closed: 0
   });
 
+  const fetchStats = async () => {
+    if (!user) return;
+    try {
+      const params = new URLSearchParams();
+      params.append('role', user.role);
+      params.append('userId', user.id.toString());
+      if (user.tax_center_id) params.append('taxCenterId', user.tax_center_id.toString());
+
+      const res = await fetch(`/api/internal/complaints?${params.toString()}`);
+      if (res.ok) {
+        const complaints = await res.json();
+        setStats({
+          total: complaints.length,
+          pending: complaints.filter((c: any) => c.CASE_STATUS === 'PENDING').length,
+          in_progress: complaints.filter((c: any) => ['ASSIGNED', 'IN_PROGRESS', 'ASSESSED', 'RESPONDED'].includes(c.CASE_STATUS)).length,
+          closed: complaints.filter((c: any) => ['APPROVED', 'CLOSED'].includes(c.CASE_STATUS)).length
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (user?.tax_center_id) params.append('taxCenterId', user.tax_center_id.toString());
-    if (user?.role) params.append('role', user.role);
-    
-    fetch(`/api/stats?${params.toString()}`).then(res => res.json()).then(setStats);
+    fetchStats();
   }, [user]);
 
   const getCards = () => {
@@ -70,7 +89,7 @@ export function Dashboard() {
       <div className="space-y-12">
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-4xl font-bold text-sky-900 tracking-tight italic serif">Welcome back, {user?.name.split(' ')[0]}</h1>
+            <h1 className="text-4xl font-bold text-sky-900 tracking-tight italic serif">Welcome back, {(user?.displayName || user?.name || 'User').split(' ')[0]}</h1>
             <p className="text-sky-500 mt-2 text-lg">
               {user?.role === UserRole.DIRECTOR && "Global overview of the Ministry of Revenues."}
               {user?.role === UserRole.TEAM_LEADER && `Overview for ${user.tax_center_name || 'your tax center'}.`}

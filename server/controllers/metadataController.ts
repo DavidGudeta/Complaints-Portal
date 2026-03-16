@@ -91,15 +91,15 @@ export const getStats = (req: any, res: any) => {
   const params: any[] = [];
 
   if (taxCenterId && role !== 'DIRECTOR' && role !== 'ADMIN') {
-    filter = " AND tax_center_id = ?";
+    filter = " AND TAX_CENTER = ?";
     params.push(taxCenterId);
   }
 
   const stats = {
-    total: db.prepare(`SELECT COUNT(*) as count FROM complaints WHERE 1=1 ${filter}`).get(...params) as any,
-    pending: db.prepare(`SELECT COUNT(*) as count FROM complaints WHERE status = 'PENDING' ${filter}`).get(...params) as any,
-    in_progress: db.prepare(`SELECT COUNT(*) as count FROM complaints WHERE status = 'IN_PROGRESS' ${filter}`).get(...params) as any,
-    closed: db.prepare(`SELECT COUNT(*) as count FROM complaints WHERE status = 'CLOSED' ${filter}`).get(...params) as any,
+    total: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE 1=1 ${filter}`).get(...params) as any,
+    pending: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'PENDING' ${filter}`).get(...params) as any,
+    in_progress: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'IN_PROGRESS' ${filter}`).get(...params) as any,
+    closed: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'CLOSED' ${filter}`).get(...params) as any,
   };
   res.json({
     total: stats.total.count,

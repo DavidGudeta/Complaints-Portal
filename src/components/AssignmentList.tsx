@@ -8,47 +8,48 @@ import {
   Filter,
   Download,
   Hash,
-  FileText
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
-import { ComplaintAssessment } from '../types';
+import { ComplaintAssignment } from '../types';
 import { formatDate, cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
-interface AssessmentListProps {
+interface AssignmentListProps {
   title: string;
 }
 
-export function AssessmentList({ title }: AssessmentListProps) {
+export function AssignmentList({ title }: AssignmentListProps) {
   const navigate = useNavigate();
-  const [assessments, setAssessments] = useState<ComplaintAssessment[]>([]);
+  const [assignments, setAssignments] = useState<ComplaintAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchAssessments = async () => {
+  const fetchAssignments = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/internal/complaints/assessments');
+      const res = await fetch('/api/internal/complaints/assignments');
       const data = await res.json();
-      setAssessments(data);
+      setAssignments(data);
     } catch (error) {
-      console.error('Failed to fetch assessments:', error);
+      console.error('Failed to fetch assignments:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAssessments();
+    fetchAssignments();
   }, []);
 
-  const filteredAssessments = assessments.filter(a => {
+  const filteredAssignments = assignments.filter(a => {
     const searchLower = searchTerm.toLowerCase();
     return (
       a.COMPLAINTS_CODE.toLowerCase().includes(searchLower) ||
-      a.INITIAL_ID.toLowerCase().includes(searchLower) ||
-      a.SENT_TO_DIRECTORATE.toLowerCase().includes(searchLower) ||
-      a.EXPLANATION_CONTENT.toLowerCase().includes(searchLower)
+      a.ASSIGN_ID.toLowerCase().includes(searchLower) ||
+      a.USER_ID.toLowerCase().includes(searchLower) ||
+      a.ASSIGN_STATUS.toLowerCase().includes(searchLower)
     );
   });
 
@@ -58,7 +59,7 @@ export function AssessmentList({ title }: AssessmentListProps) {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold text-sky-900 tracking-tight italic serif">{title}</h1>
-            <p className="text-sky-500 mt-2">Review all assessment findings and recommendations.</p>
+            <p className="text-sky-500 mt-2">Track and manage all complaint assignments.</p>
           </div>
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-sky-50 border border-sky-200 rounded-xl text-sm font-bold text-sky-600 hover:bg-sky-100 transition-all">
@@ -76,7 +77,7 @@ export function AssessmentList({ title }: AssessmentListProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-sky-400" size={18} />
               <input 
                 type="text" 
-                placeholder="Search assessments..." 
+                placeholder="Search assignments..." 
                 className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-sm focus:ring-1 focus:ring-sky-500 transition-all outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -84,14 +85,13 @@ export function AssessmentList({ title }: AssessmentListProps) {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1200px]">
+            <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-sky-100/50 border-b border-sky-200">
-                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Initial ID</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Assign ID</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Complaint Code</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Directorate</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Sent By</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Explanation</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">User ID</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Assign Date</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest">Status</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-sky-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
@@ -100,33 +100,37 @@ export function AssessmentList({ title }: AssessmentListProps) {
                 {isLoading ? (
                   [1, 2, 3].map(i => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={7} className="px-6 py-8">
+                      <td colSpan={6} className="px-6 py-8">
                         <div className="h-4 bg-sky-200 rounded w-full" />
                       </td>
                     </tr>
                   ))
-                ) : filteredAssessments.length > 0 ? (
-                  filteredAssessments.map((a, i) => (
+                ) : filteredAssignments.length > 0 ? (
+                  filteredAssignments.map((a, i) => (
                     <motion.tr 
                       key={a.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.05 }}
-                      onClick={() => navigate(`/cases/detail/${a.COMPLAINTS_CODE}`)}
                       className="hover:bg-white transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-5 font-mono text-xs text-sky-500">{a.INITIAL_ID}</td>
+                      <td className="px-6 py-5 font-mono text-xs text-sky-500">{a.ASSIGN_ID}</td>
                       <td className="px-6 py-5 font-mono font-bold text-sky-900">{a.COMPLAINTS_CODE}</td>
-                      <td className="px-6 py-5 text-sm font-medium text-sky-700">{a.SENT_TO_DIRECTORATE}</td>
-                      <td className="px-6 py-5 text-xs text-sky-500">{a.SENT_BY}</td>
-                      <td className="px-6 py-5 text-xs text-sky-500 max-w-xs truncate italic">{a.EXPLANATION_CONTENT}</td>
+                      <td className="px-6 py-5 text-sm font-medium text-sky-700">{a.USER_ID}</td>
+                      <td className="px-6 py-5 text-xs text-sky-900">{formatDate(a.ASSIGNED_DATE)}</td>
                       <td className="px-6 py-5">
-                        <span className="px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider bg-sky-50 text-sky-700 border-sky-100">
-                          {a.ASSESSMENT_STATUS}
+                        <span className={cn(
+                          "px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider",
+                          a.ASSIGN_STATUS === 'Accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                        )}>
+                          {a.ASSIGN_STATUS}
                         </span>
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <button className="p-2 text-sky-400 hover:text-sky-900 hover:bg-sky-100 rounded-lg transition-all">
+                        <button 
+                          onClick={() => navigate(`/cases/detail/${a.COMPLAINTS_CODE}`)}
+                          className="p-2 text-sky-400 hover:text-sky-900 hover:bg-sky-100 rounded-lg transition-all"
+                        >
                           <ArrowRight size={16} />
                         </button>
                       </td>
@@ -134,11 +138,11 @@ export function AssessmentList({ title }: AssessmentListProps) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center">
+                    <td colSpan={6} className="px-6 py-20 text-center">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-sky-300 border border-sky-100">
-                        <ClipboardCheck size={32} />
+                        <Clock size={32} />
                       </div>
-                      <p className="text-sky-400 font-medium">No assessments found.</p>
+                      <p className="text-sky-400 font-medium">No assignments found.</p>
                     </td>
                   </tr>
                 )}

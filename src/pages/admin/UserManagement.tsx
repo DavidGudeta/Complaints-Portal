@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { User, UserRole, TaxCenter } from '../../types';
 import { cn } from '../../lib/utils';
-
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [taxCenters, setTaxCenters] = useState<TaxCenter[]>([]);
@@ -34,10 +33,6 @@ export function UserManagement() {
     tax_center_id: ''
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -45,24 +40,24 @@ export function UserManagement() {
         fetch('/api/admin/users'),
         fetch('/api/tax-centers')
       ]);
-      const [usersData, centersData] = await Promise.all([
-        usersRes.json(),
-        centersRes.json()
-      ]);
-      setUsers(usersData);
-      setTaxCenters(centersData);
-    } catch (err) {
-      console.error(err);
+      if (usersRes.ok) setUsers(await usersRes.json());
+      if (centersRes.ok) setTaxCenters(await centersRes.json());
+    } catch (error) {
+      console.error('Failed to fetch users/centers:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const handleOpenModal = (user: User | null = null) => {
     if (user) {
       setEditingUser(user);
       setFormData({
-        name: user.name,
+        name: user.displayName || user.name || '',
         email: user.email,
         password: '',
         role: user.role,
@@ -87,26 +82,25 @@ export function UserManagement() {
     setIsSubmitting(true);
     setError(null);
 
-    const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
-    const method = editingUser ? 'PATCH' : 'POST';
-
     try {
+      const url = editingUser 
+        ? `/api/admin/users/${editingUser.id}` 
+        : '/api/admin/users';
+      const method = editingUser ? 'PATCH' : 'POST';
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          tax_center_id: formData.tax_center_id ? parseInt(formData.tax_center_id) : null
-        })
+        body: JSON.stringify(formData)
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        setIsModalOpen(false);
+        fetchData();
+      } else {
         const data = await res.json();
         throw new Error(data.error || 'Failed to save user');
       }
-
-      await fetchData();
-      setIsModalOpen(false);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -114,19 +108,24 @@ export function UserManagement() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-    
     try {
-      await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
-      await fetchData();
-    } catch (err) {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete user');
+      }
+    } catch (err: any) {
       console.error(err);
+      alert(err.message);
     }
   };
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.displayName || u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -189,10 +188,10 @@ export function UserManagement() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold border border-sky-200">
-                          {u.name.charAt(0)}
+                          {(u.displayName || u.name || '?').charAt(0)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-sky-900">{u.name}</p>
+                          <p className="text-sm font-bold text-sky-900">{u.displayName || u.name}</p>
                           <p className="text-xs text-sky-500">{u.email}</p>
                         </div>
                       </div>

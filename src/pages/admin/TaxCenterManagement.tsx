@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { TaxCenter } from '../../types';
 import { cn } from '../../lib/utils';
-
 export function TaxCenterManagement() {
   const [centers, setCenters] = useState<TaxCenter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,22 +28,24 @@ export function TaxCenterManagement() {
     location: ''
   });
 
-  useEffect(() => {
-    fetchCenters();
-  }, []);
-
   const fetchCenters = async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/tax-centers');
-      const data = await res.json();
-      setCenters(data);
-    } catch (err) {
-      console.error(err);
+      if (res.ok) {
+        const data = await res.json();
+        setCenters(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch tax centers:', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCenters();
+  }, []);
 
   const handleOpenModal = (center: TaxCenter | null = null) => {
     if (center) {
@@ -69,23 +70,25 @@ export function TaxCenterManagement() {
     setIsSubmitting(true);
     setError(null);
 
-    const url = editingCenter ? `/api/admin/tax-centers/${editingCenter.id}` : '/api/admin/tax-centers';
-    const method = editingCenter ? 'PATCH' : 'POST';
-
     try {
+      const url = editingCenter 
+        ? `/api/admin/tax-centers/${editingCenter.id}` 
+        : '/api/admin/tax-centers';
+      const method = editingCenter ? 'PATCH' : 'POST';
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        setIsModalOpen(false);
+        fetchCenters();
+      } else {
         const data = await res.json();
         throw new Error(data.error || 'Failed to save tax center');
       }
-
-      await fetchCenters();
-      setIsModalOpen(false);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -93,16 +96,16 @@ export function TaxCenterManagement() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this tax center?')) return;
-    
     try {
       const res = await fetch(`/api/admin/tax-centers/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
+      if (res.ok) {
+        fetchCenters();
+      } else {
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete tax center');
       }
-      await fetchCenters();
     } catch (err: any) {
       alert(err.message);
     }

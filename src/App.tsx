@@ -12,6 +12,7 @@ import { InternalLayout } from './components/InternalLayout';
 import { Dashboard } from './pages/Dashboard';
 import { ComplaintList } from './components/ComplaintList';
 import { AssessmentList } from './components/AssessmentList';
+import { AssignmentList } from './components/AssignmentList';
 import { ResponseList } from './components/ResponseList';
 import { ComplaintStatus } from './types';
 
@@ -85,7 +86,7 @@ function AppRoutes() {
         
         <Route path="/manage/assigned" element={
           <RoleGuard allowedRoles={[UserRole.DIRECTOR, UserRole.TEAM_LEADER, UserRole.OFFICER]}>
-            <ComplaintList title="Assigned Complaints" status={ComplaintStatus.ASSIGNED} />
+            <AssignmentList title="Assigned Complaints" />
           </RoleGuard>
         } />
         <Route path="/manage/unassigned" element={

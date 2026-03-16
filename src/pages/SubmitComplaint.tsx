@@ -19,9 +19,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ComplaintCategory } from '../types';
+import { ComplaintCategory, TaxCenter, ComplaintStatus } from '../types';
 import { cn } from '../lib/utils';
-
 export function SubmitComplaint() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +28,7 @@ export function SubmitComplaint() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<ComplaintCategory[]>([]);
-  const [taxCenters, setTaxCenters] = useState<any[]>([]);
+  const [taxCenters, setTaxCenters] = useState<TaxCenter[]>([]);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -50,9 +49,21 @@ export function SubmitComplaint() {
     files: [] as File[]
   });
 
+  const fetchData = async () => {
+    try {
+      const [catsRes, centersRes] = await Promise.all([
+        fetch('/api/categories'),
+        fetch('/api/tax-centers')
+      ]);
+      if (catsRes.ok) setCategories(await catsRes.json());
+      if (centersRes.ok) setTaxCenters(await centersRes.json());
+    } catch (error) {
+      console.error('Failed to fetch metadata:', error);
+    }
+  };
+
   useEffect(() => {
-    fetch('/api/categories').then(res => res.json()).then(setCategories);
-    fetch('/api/tax-centers').then(res => res.json()).then(setTaxCenters);
+    fetchData();
   }, []);
 
   const handleTinSearch = async () => {
@@ -74,28 +85,36 @@ export function SubmitComplaint() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const data = new FormData();
+      const formDataToSend = new FormData();
       
-      // Append all form fields
+      // Add all text fields
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'files') {
-          formData.files.forEach(file => {
-            data.append('files', file);
-          });
-        } else {
-          data.append(key, value as string);
+        if (key !== 'files') {
+          formDataToSend.append(key, value as string);
         }
       });
 
-      const response = await fetch('/api/complaints', {
-        method: 'POST',
-        body: data
+      // Add files
+      formData.files.forEach(file => {
+        formDataToSend.append('files', file);
       });
-      const result = await response.json();
-      setTrackingCode(result.tracking_code);
-      setStep(4);
-    } catch (error) {
+
+      const res = await fetch('/api/complaints', {
+        method: 'POST',
+        body: formDataToSend
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTrackingCode(data.tracking_code);
+        setStep(4);
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to submit complaint');
+      }
+    } catch (error: any) {
       console.error(error);
+      alert(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -344,7 +363,7 @@ export function SubmitComplaint() {
                         disabled={!formData.category_id}
                       >
                         <option value="">Select a subcategory</option>
-                        {categories.filter(c => c.parent_id === parseInt(formData.category_id)).map(c => (
+                        {categories.filter(c => c.parent_id === formData.category_id).map(c => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>

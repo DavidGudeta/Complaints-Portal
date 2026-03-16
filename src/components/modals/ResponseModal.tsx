@@ -5,8 +5,8 @@ interface ResponseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
-  complaintId: number;
-  userId: number;
+  complaintId: string;
+  userId: string;
 }
 
 export function ResponseModal({ isOpen, onClose, onSuccess, complaintId, userId }: ResponseModalProps) {
@@ -22,21 +22,25 @@ export function ResponseModal({ isOpen, onClose, onSuccess, complaintId, userId 
     setError(null);
 
     try {
-      const res = await fetch('/api/internal/responses', {
+      const res = await fetch(`/api/internal/complaints/responses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          complaint_id: complaintId,
-          user_id: userId,
-          message
+        body: JSON.stringify({ 
+          complaintId,
+          message, 
+          userId 
         })
       });
 
-      if (!res.ok) throw new Error('Failed to send response');
-
-      onSuccess(message);
-      onClose();
+      if (res.ok) {
+        onSuccess(message);
+        onClose();
+      } else {
+        const errData = await res.json();
+        setError(errData.message || 'Failed to submit response');
+      }
     } catch (err: any) {
+      console.error('Response error:', err);
       setError(err.message);
     } finally {
       setIsSubmitting(false);

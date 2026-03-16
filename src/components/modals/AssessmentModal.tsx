@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { X, Save, Loader2, AlertCircle, ClipboardCheck } from 'lucide-react';
-import { ComplaintStatus } from '../../types';
 
 interface AssessmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
-  complaintId: number;
-  userId: number;
+  complaintId: string;
+  userId: string;
 }
 
 export function AssessmentModal({ isOpen, onClose, onSuccess, complaintId, userId }: AssessmentModalProps) {
@@ -23,23 +22,25 @@ export function AssessmentModal({ isOpen, onClose, onSuccess, complaintId, userI
     setError(null);
 
     try {
-      // 1. Add the assessment to assessments table
-      const res = await fetch('/api/internal/complaints/assessments', {
+      const res = await fetch(`/api/internal/complaints/assessments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          complaint_id: complaintId,
-          user_id: userId,
-          findings: message,
-          recommendation: '' // Optional recommendation field
+        body: JSON.stringify({ 
+          complaintId,
+          message, 
+          userId 
         })
       });
 
-      if (!res.ok) throw new Error('Failed to save assessment');
-
-      onSuccess(message);
-      onClose();
+      if (res.ok) {
+        onSuccess(message);
+        onClose();
+      } else {
+        const errData = await res.json();
+        setError(errData.message || 'Failed to submit assessment');
+      }
     } catch (err: any) {
+      console.error('Assessment error:', err);
       setError(err.message);
     } finally {
       setIsSubmitting(false);

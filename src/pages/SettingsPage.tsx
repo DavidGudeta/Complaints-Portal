@@ -35,72 +35,73 @@ export function SettingsPage({ title, type }: SettingsPageProps) {
     parent_id: '' 
   });
 
-  useEffect(() => {
-    fetchData();
-    if (type === 'subcategories') {
-      fetchCategories();
-    }
-  }, [type]);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch('/api/categories');
-      const data = await res.json();
-      setCategories(data.filter((c: any) => !c.parent_id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      if (type === 'categories') {
-        const res = await fetch('/api/categories');
-        const categories = await res.json();
-        setData(categories.filter((c: any) => !c.parent_id));
-      } else if (type === 'subcategories') {
-        const res = await fetch('/api/subcategories');
-        const subcategories = await res.json();
-        setData(subcategories);
-      } else {
-        // Mock status data since we don't have an endpoint for it yet
+      if (type === 'status') {
         const statuses = [
-          { id: 1, name: 'PENDING', description: 'Initial state of a complaint', color: '#f59e0b' },
-          { id: 2, name: 'ASSIGNED', description: 'Complaint assigned to an officer', color: '#3b82f6' },
-          { id: 3, name: 'IN_PROGRESS', description: 'Officer is working on the case', color: '#8b5cf6' },
-          { id: 4, name: 'RESOLVED', description: 'Case has been resolved', color: '#10b981' },
-          { id: 5, name: 'CLOSED', description: 'Case is officially closed', color: '#6b7280' },
+          { id: 'PENDING', name: 'PENDING', description: 'Initial state of a complaint', color: '#f59e0b' },
+          { id: 'ASSIGNED', name: 'ASSIGNED', description: 'Complaint assigned to an officer', color: '#3b82f6' },
+          { id: 'IN_PROGRESS', name: 'IN_PROGRESS', description: 'Officer is working on the case', color: '#8b5cf6' },
+          { id: 'RESOLVED', name: 'RESOLVED', description: 'Case has been resolved', color: '#10b981' },
+          { id: 'CLOSED', name: 'CLOSED', description: 'Case is officially closed', color: '#6b7280' },
         ];
         setData(statuses);
+      } else {
+        const endpoint = type === 'categories' ? '/api/admin/categories' : '/api/admin/subcategories';
+        const res = await fetch(endpoint);
+        const result = await res.json();
+        setData(result);
+
+        if (type === 'subcategories') {
+          const catRes = await fetch('/api/admin/categories');
+          const catResult = await catRes.json();
+          setCategories(catResult);
+        }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch data:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOpenModal = (item: any | null = null) => {
-    setError(null);
+  useEffect(() => {
+    fetchData();
+  }, [type]);
+
+  const handleOpenModal = (item: any = null) => {
     if (item) {
       setEditingItem(item);
-      setFormData({ 
-        name: item.name, 
-        description: item.description || '', 
+      setFormData({
+        name: item.name || '',
+        description: item.description || '',
         color: item.color || '#3b82f6',
-        parent_id: item.parent_id?.toString() || ''
+        parent_id: item.parent_id || ''
       });
     } else {
       setEditingItem(null);
-      setFormData({ 
-        name: '', 
-        description: '', 
+      setFormData({
+        name: '',
+        description: '',
         color: '#3b82f6',
         parent_id: ''
       });
     }
     setIsModalOpen(true);
+    setError(null);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+    setFormData({
+      name: '',
+      description: '',
+      color: '#3b82f6',
+      parent_id: ''
+    });
+    setError(null);
   };
 
   const handleSave = async () => {
@@ -116,26 +117,28 @@ export function SettingsPage({ title, type }: SettingsPageProps) {
     setIsSaving(true);
     setError(null);
     try {
-      const url = editingItem 
-        ? `/api/admin/categories/${editingItem.id}` 
-        : '/api/admin/categories';
-      
-      const response = await fetch(url, {
-        method: editingItem ? 'PATCH' : 'POST',
+      const endpoint = type === 'subcategories' ? '/api/admin/subcategories' : '/api/admin/categories';
+      const method = editingItem ? 'PATCH' : 'POST';
+      const url = editingItem ? `${endpoint}/${editingItem.id}` : endpoint;
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name,
-          parent_id: type === 'subcategories' ? parseInt(formData.parent_id) : null
+          ...formData,
+          ...(type === 'subcategories' && { 
+            category_name: categories.find(c => c.id === formData.parent_id)?.name || ''
+          })
         })
       });
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to save');
+      if (res.ok) {
+        setIsModalOpen(false);
+        fetchData();
+      } else {
+        const errData = await res.json();
+        setError(errData.message || 'Failed to save');
       }
-
-      await fetchData();
-      setIsModalOpen(false);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -143,20 +146,17 @@ export function SettingsPage({ title, type }: SettingsPageProps) {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
-
     try {
-      const response = await fetch(`/api/admin/categories/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to delete');
+      const endpoint = type === 'subcategories' ? '/api/admin/subcategories' : '/api/admin/categories';
+      const res = await fetch(`${endpoint}/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Failed to delete');
       }
-
-      await fetchData();
     } catch (err: any) {
       alert(err.message);
     }

@@ -33,7 +33,7 @@ interface ComplaintListProps {
   title: string;
   status?: ComplaintStatus;
   role?: string;
-  userId?: number;
+  userId?: string;
   isAllComplaints?: boolean;
 }
 
@@ -43,9 +43,10 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
   const { complaints, isLoading, fetchComplaints, deleteComplaint, assignComplaint } = useComplaints({ status, role, userId });
   const [searchTerm, setSearchTerm] = useState('');
   const [officers, setOfficers] = useState<UserType[]>([]);
-  const [assigningId, setAssigningId] = useState<number | null>(null);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
-  const [selectedComplaintId, setSelectedComplaintId] = useState<number | null>(null);
+  const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
+  const [selectedComplaintCode, setSelectedComplaintCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUser?.role === UserRole.TEAM_LEADER || currentUser?.role === UserRole.DIRECTOR) {
@@ -53,24 +54,27 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
     }
   }, [currentUser]);
 
-  const fetchOfficers = () => {
-    fetch('/api/admin/users')
-      .then(res => res.json())
-      .then(data => {
-        setOfficers(data.filter((u: UserType) => {
-          const isOfficer = u.role === UserRole.OFFICER;
-          if (currentUser?.role === UserRole.TEAM_LEADER) {
-            return isOfficer && u.tax_center_id === currentUser.tax_center_id;
-          }
-          return isOfficer;
-        }));
-      });
+  const fetchOfficers = async () => {
+    try {
+      const res = await fetch('/api/admin/users?role=OFFICER');
+      const data = await res.json();
+      setOfficers(data.filter((u: UserType) => {
+        if (currentUser?.role === UserRole.TEAM_LEADER) {
+          return u.tax_center_id === currentUser.tax_center_id;
+        }
+        return true;
+      }));
+    } catch (error) {
+      console.error('Failed to fetch officers:', error);
+    }
   };
 
-  const handleAssign = async (complaintId: number, officerId: string) => {
+  const handleAssign = async (complaintId: string, officerId: string) => {
     if (!officerId) return;
+    const officer = officers.find(o => o.uid === officerId);
+    if (!officer) return;
     setAssigningId(complaintId);
-    await assignComplaint(complaintId, parseInt(officerId));
+    await assignComplaint(complaintId, officerId, officer.displayName || officer.email);
     setAssigningId(null);
   };
 
@@ -88,25 +92,25 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
   const filteredComplaints = complaints.filter(c => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      c.tracking_code.toLowerCase().includes(searchLower) ||
-      c.name.toLowerCase().includes(searchLower) ||
-      c.tin.toLowerCase().includes(searchLower) ||
-      c.subject.toLowerCase().includes(searchLower) ||
+      c.COMPLAINT_CODE.toLowerCase().includes(searchLower) ||
+      c.COMPLAINANT_NAME.toLowerCase().includes(searchLower) ||
+      c.TIN.toLowerCase().includes(searchLower) ||
+      c.COMPLAINTS_TITLE.toLowerCase().includes(searchLower) ||
       c.category_name?.toLowerCase().includes(searchLower) ||
       c.assigned_name?.toLowerCase().includes(searchLower) ||
-      c.mrc_code?.toLowerCase().includes(searchLower) ||
-      c.email.toLowerCase().includes(searchLower) ||
-      c.phone.toLowerCase().includes(searchLower) ||
+      c.MACHINE_CODE?.toLowerCase().includes(searchLower) ||
+      c.COMPLAINANT_EMAIL?.toLowerCase().includes(searchLower) ||
+      c.COMPLAINANT_PHONE.toLowerCase().includes(searchLower) ||
       c.tax_center_name?.toLowerCase().includes(searchLower)
     );
   });
 
   const stats = {
     total: complaints.length,
-    pending: complaints.filter(c => c.status === ComplaintStatus.PENDING).length,
-    assigned: complaints.filter(c => c.status === ComplaintStatus.ASSIGNED).length,
-    inProgress: complaints.filter(c => c.status === ComplaintStatus.IN_PROGRESS).length,
-    closed: complaints.filter(c => c.status === ComplaintStatus.CLOSED).length,
+    pending: complaints.filter(c => c.CASE_STATUS === ComplaintStatus.PENDING).length,
+    assigned: complaints.filter(c => c.CASE_STATUS === ComplaintStatus.ASSIGNED).length,
+    inProgress: complaints.filter(c => c.CASE_STATUS === ComplaintStatus.IN_PROGRESS).length,
+    closed: complaints.filter(c => c.CASE_STATUS === ComplaintStatus.CLOSED).length,
     categories: Array.from(new Set(complaints.map(c => c.category_name))).filter(Boolean).length
   };
 
@@ -233,29 +237,29 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
                 ) : filteredComplaints.length > 0 ? (
                   filteredComplaints.map((c, i) => (
                       <motion.tr 
-                        key={c.id}
+                        key={c.COMPLAINTS_ID}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.05 }}
-                        onClick={() => navigate(`/cases/detail/${c.tracking_code}`)}
+                        onClick={() => navigate(`/cases/detail/${c.COMPLAINT_CODE}`)}
                         className="hover:bg-white transition-colors group cursor-pointer"
                       >
-                      <td className="px-4 py-5 font-mono text-xs text-sky-900">{c.tin}</td>
-                      <td className="px-4 py-5 text-sm font-bold text-sky-900">{c.name}</td>
-                      <td className="px-4 py-5 text-xs text-sky-500">{c.email}</td>
-                      <td className="px-4 py-5 text-xs text-sky-500">{c.phone}</td>
+                      <td className="px-4 py-5 font-mono text-xs text-sky-900">{c.TIN}</td>
+                      <td className="px-4 py-5 text-sm font-bold text-sky-900">{c.COMPLAINANT_NAME}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.COMPLAINANT_EMAIL}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.COMPLAINANT_PHONE}</td>
                       <td className="px-4 py-5 text-xs text-sky-500">
-                        {c.woreda || c.zone || c.region ? (
+                        {c.ENTERPRISE_ADDRESS || c.CUSTOMER_ADDRESS ? (
                           <span className="italic">
-                            {[c.woreda, c.zone, c.region].filter(Boolean).join(', ')}
+                            {[c.ENTERPRISE_ADDRESS, c.CUSTOMER_ADDRESS].filter(Boolean).join(', ')}
                           </span>
                         ) : (
                           <span className="text-sky-300">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-5 font-mono font-bold text-sky-900">{c.tracking_code}</td>
-                      <td className="px-4 py-5 text-xs text-sky-500">{c.mrc_code || <span className="text-sky-300">-</span>}</td>
-                      <td className="px-4 py-5 text-xs text-sky-500">{c.ref_no || <span className="text-sky-300">-</span>}</td>
+                      <td className="px-4 py-5 font-mono font-bold text-sky-900">{c.COMPLAINT_CODE}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.MACHINE_CODE || <span className="text-sky-300">-</span>}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500">{c.REFERENCE_NO || <span className="text-sky-300">-</span>}</td>
                       <td className="px-4 py-5">
                         <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider bg-sky-100 px-1.5 py-0.5 rounded">
                           {c.category_name}
@@ -266,28 +270,28 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
                           {c.subcategory_name || <span className="text-sky-300">-</span>}
                         </span>
                       </td>
-                      <td className="px-4 py-5 text-sm text-sky-900 font-bold max-w-[200px] truncate">{c.subject}</td>
-                      <td className="px-4 py-5 text-xs text-sky-500 max-w-[250px] truncate italic">{c.description}</td>
+                      <td className="px-4 py-5 text-sm text-sky-900 font-bold max-w-[200px] truncate">{c.COMPLAINTS_TITLE}</td>
+                      <td className="px-4 py-5 text-xs text-sky-500 max-w-[250px] truncate italic">{c.COMPLAIN_DETAILS}</td>
                       <td className="px-4 py-5">
                         <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded">
                           {c.tax_center_name}
                         </span>
                       </td>
                       <td className="px-4 py-5">
-                        <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", getStatusColor(c.status))}>
-                          {c.status}
+                        <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider", getStatusColor(c.CASE_STATUS))}>
+                          {c.CASE_STATUS}
                         </span>
                       </td>
-                      <td className="px-4 py-5 text-xs text-sky-900">{formatDate(c.created_at).split(',')[0]}</td>
+                      <td className="px-4 py-5 text-xs text-sky-900">{formatDate(c.APPLIED_DATE).split(',')[0]}</td>
                       <td className="px-4 py-5 text-xs text-sky-900">
-                        {c.due_date ? formatDate(c.due_date).split(',')[0] : <span className="text-sky-300">-</span>}
+                        {c.LAST_UPDATED_DATE ? formatDate(c.LAST_UPDATED_DATE).split(',')[0] : <span className="text-sky-300">-</span>}
                       </td>
                       <td className="px-4 py-5 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/cases/detail/${c.tracking_code}`);
+                              navigate(`/cases/detail/${c.COMPLAINT_CODE}`);
                             }}
                             className="p-1.5 text-sky-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all"
                             title="Edit Case"
@@ -297,18 +301,32 @@ export function ComplaintList({ title, status, role, userId, isAllComplaints }: 
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/cases/detail/${c.tracking_code}`);
+                              navigate(`/cases/detail/${c.COMPLAINT_CODE}`);
                             }}
                             className="p-1.5 text-sky-400 hover:text-sky-900 hover:bg-sky-100 rounded-lg transition-all"
                             title="View Details"
                           >
                             <ArrowRight size={16} />
                           </button>
+                          {currentUser?.role === UserRole.OFFICER && c.CASE_STATUS === ComplaintStatus.ASSIGNED && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedComplaintId(c.COMPLAINTS_ID);
+                                setSelectedComplaintCode(c.COMPLAINT_CODE);
+                                setIsAssessmentModalOpen(true);
+                              }}
+                              className="p-1.5 text-sky-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                              title="Add Assessment"
+                            >
+                              <ClipboardCheck size={16} />
+                            </button>
+                          )}
                           {(currentUser?.role === UserRole.DIRECTOR || currentUser?.role === UserRole.TEAM_LEADER) && (
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteComplaint(c.id);
+                                deleteComplaint(c.COMPLAINTS_ID);
                               }}
                               className="p-1.5 text-sky-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                               title="Delete Case"

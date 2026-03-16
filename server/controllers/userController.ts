@@ -79,10 +79,10 @@ export const getPerformanceStats = (req: any, res: any) => {
       u.name, 
       u.role, 
       tc.name as tax_center_name,
-      COUNT(c.id) as complaint_count
+      COUNT(c.COMPLAINTS_ID) as complaint_count
     FROM users u
     LEFT JOIN tax_centers tc ON u.tax_center_id = tc.id
-    LEFT JOIN complaints c ON u.id = c.assigned_to
+    LEFT JOIN complaints_case c ON u.id = c.RELEVANT_OFFICER
     WHERE u.role IN ('OFFICER', 'TEAM_LEADER')
     GROUP BY u.id
     ORDER BY complaint_count DESC

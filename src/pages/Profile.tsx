@@ -23,7 +23,7 @@ export function Profile() {
   const [error, setError] = useState<string | null>(null);
 
   const [profileData, setProfileData] = useState({
-    name: user?.name || '',
+    name: user?.displayName || user?.name || '',
     email: user?.email || ''
   });
 
@@ -35,24 +35,32 @@ export function Profile() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const response = await fetch(`/api/profile/${user?.id}`, {
+      const res = await fetch(`/api/profile/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileData)
+        body: JSON.stringify({
+          name: profileData.name,
+          email: profileData.email
+        })
       });
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        updateUser(updatedUser);
+      if (res.ok) {
+        updateUser({
+          ...user,
+          displayName: profileData.name,
+          name: profileData.name,
+          email: profileData.email
+        });
         setSuccess('Profile updated successfully');
         setIsEditing(false);
       } else {
-        const data = await response.json();
+        const data = await res.json();
         throw new Error(data.error || 'Failed to update profile');
       }
     } catch (err: any) {
@@ -64,6 +72,7 @@ export function Profile() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setError('New passwords do not match');
       return;
@@ -74,7 +83,7 @@ export function Profile() {
     setSuccess(null);
 
     try {
-      const response = await fetch(`/api/profile/${user?.id}/password`, {
+      const res = await fetch(`/api/profile/${user.id}/password`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -83,12 +92,12 @@ export function Profile() {
         })
       });
 
-      if (response.ok) {
+      if (res.ok) {
         setSuccess('Password changed successfully');
         setIsChangingPassword(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        const data = await response.json();
+        const data = await res.json();
         throw new Error(data.error || 'Failed to change password');
       }
     } catch (err: any) {
@@ -155,9 +164,9 @@ export function Profile() {
           <div className="md:col-span-1">
             <div className="bg-sky-50 rounded-3xl p-8 border border-sky-100 shadow-sm text-center">
               <div className="w-24 h-24 bg-sky-600 rounded-full mx-auto flex items-center justify-center text-3xl font-bold text-white shadow-xl shadow-sky-200 mb-6">
-                {user.name.charAt(0)}
+                {(user.displayName || user.name || 'U').charAt(0)}
               </div>
-              <h2 className="text-xl font-bold text-sky-900">{user.name}</h2>
+              <h2 className="text-xl font-bold text-sky-900">{user.displayName || user.name}</h2>
               <p className="text-sm text-sky-500 mt-1">{user.email}</p>
               <div className="mt-6 pt-6 border-t border-sky-200 flex flex-col gap-3">
                 <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-white border border-sky-100 rounded-full text-[10px] font-bold text-sky-500 uppercase tracking-widest">
@@ -294,7 +303,7 @@ export function Profile() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-sky-400 uppercase tracking-widest">Full Name</p>
-                      <p className="text-sky-900 font-medium">{user.name}</p>
+                      <p className="text-sky-900 font-medium">{user.displayName || user.name}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-sky-400 uppercase tracking-widest">Email Address</p>

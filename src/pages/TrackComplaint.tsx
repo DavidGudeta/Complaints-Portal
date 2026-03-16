@@ -38,15 +38,20 @@ export function TrackComplaint() {
     setIsSearching(true);
     setError(null);
     try {
-      const response = await fetch(`/api/complaints/track/${code}`);
-      if (response.ok) {
-        const data = await response.json();
-        setComplaint(data);
+      const res = await fetch(`/api/complaints/track/${code}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComplaint({
+          ...data,
+          responses: data.responses || [],
+          attachments: data.ATTACHMENTS?.map((filename: string) => ({ filename, url: '#' })) || []
+        });
       } else {
         setError('Tracking code not found. Please check and try again.');
         setComplaint(null);
       }
     } catch (err) {
+      console.error(err);
       setError('An error occurred. Please try again later.');
     } finally {
       setIsSearching(false);
@@ -58,23 +63,21 @@ export function TrackComplaint() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/complaints/track/feedback`, {
+      const res = await fetch(`/api/complaints/track/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tracking_code: complaint.tracking_code,
+          complaint_id: complaint.COMPLAINTS_ID,
           message: feedback
         })
       });
 
-      if (response.ok) {
+      if (res.ok) {
         setFeedback('');
-        // Refresh complaint data to show the new response
         handleSearch();
-      } else {
-        alert('Failed to send feedback. Please try again.');
       }
     } catch (err) {
+      console.error(err);
       alert('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -85,25 +88,23 @@ export function TrackComplaint() {
     if (selectedFiles.length === 0 || !complaint) return;
 
     setIsUploading(true);
-    const formData = new FormData();
-    selectedFiles.forEach(file => {
-      formData.append('files', file);
-    });
-
     try {
-      const response = await fetch(`/api/complaints/track/${complaint.tracking_code}/attachments`, {
+      // In a real app, upload to storage and get URLs
+      const formData = new FormData();
+      selectedFiles.forEach(file => formData.append('files', file));
+
+      const res = await fetch(`/api/complaints/track/${complaint.COMPLAINTS_CODE}/attachments`, {
         method: 'POST',
         body: formData
       });
 
-      if (response.ok) {
+      if (res.ok) {
         setSelectedFiles([]);
         alert('Documents uploaded successfully!');
         handleSearch();
-      } else {
-        alert('Failed to upload documents. Please try again.');
       }
     } catch (err) {
+      console.error(err);
       alert('An error occurred during upload.');
     } finally {
       setIsUploading(false);
@@ -206,42 +207,42 @@ export function TrackComplaint() {
                 </div>
 
                 <div className="flex justify-between mb-8 relative px-4">
-                  <div className="absolute top-1/2 left-0 w-full h-1 bg-sky-100 -translate-y-1/2 z-0" />
-                  <div 
-                    className="absolute top-1/2 left-0 h-1 bg-sky-600 -translate-y-1/2 z-0 transition-all duration-1000" 
-                    style={{ width: `${((getStatusStep(complaint.status) - 1) / 3) * 100}%` }}
-                  />
-                  {[
-                    { label: 'Submitted', icon: <FileText size={20} /> },
-                    { label: 'Assigned', icon: <User size={20} /> },
-                    { label: 'In Review', icon: <Clock size={20} /> },
-                    { label: 'Resolved', icon: <CheckCircle2 size={20} /> }
-                  ].map((s, i) => (
-                    <div key={i} className="relative z-10 flex flex-col items-center">
-                      <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
-                        getStatusStep(complaint.status) > i 
-                          ? "bg-sky-600 text-white shadow-lg shadow-sky-200" 
-                          : getStatusStep(complaint.status) === i + 1
-                            ? "bg-sky-600 text-white shadow-lg shadow-sky-200"
-                            : "bg-white text-sky-300 border-2 border-sky-100"
-                      )}>
-                        {s.icon}
+                     <div className="absolute top-1/2 left-0 w-full h-1 bg-sky-100 -translate-y-1/2 z-0" />
+                    <div 
+                      className="absolute top-1/2 left-0 h-1 bg-sky-600 -translate-y-1/2 z-0 transition-all duration-1000" 
+                      style={{ width: `${((getStatusStep(complaint.COMPLAINTS_STATUS) - 1) / 3) * 100}%` }}
+                    />
+                    {[
+                      { label: 'Submitted', icon: <FileText size={20} /> },
+                      { label: 'Assigned', icon: <User size={20} /> },
+                      { label: 'In Review', icon: <Clock size={20} /> },
+                      { label: 'Resolved', icon: <CheckCircle2 size={20} /> }
+                    ].map((s, i) => (
+                      <div key={i} className="relative z-10 flex flex-col items-center">
+                        <div className={cn(
+                          "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500",
+                          getStatusStep(complaint.COMPLAINTS_STATUS) > i 
+                            ? "bg-sky-600 text-white shadow-lg shadow-sky-200" 
+                            : getStatusStep(complaint.COMPLAINTS_STATUS) === i + 1
+                              ? "bg-sky-600 text-white shadow-lg shadow-sky-200"
+                              : "bg-white text-sky-300 border-2 border-sky-100"
+                        )}>
+                          {s.icon}
+                        </div>
+                        <span className={cn(
+                          "text-xs font-bold mt-3 uppercase tracking-widest",
+                          getStatusStep(complaint.COMPLAINTS_STATUS) >= i + 1 ? "text-sky-600" : "text-sky-400"
+                        )}>{s.label}</span>
                       </div>
-                      <span className={cn(
-                        "text-xs font-bold mt-3 uppercase tracking-widest",
-                        getStatusStep(complaint.status) >= i + 1 ? "text-sky-600" : "text-sky-400"
-                      )}>{s.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-center gap-4 pt-4 border-t border-sky-50">
-                  <span className="text-sm text-sky-500">Current Status:</span>
-                  <span className={cn("px-4 py-1.5 rounded-full text-sm font-bold border", getStatusColor(complaint.status))}>
-                    {complaint.status}
-                  </span>
-                </div>
+                    ))}
+                  </div>
+  
+                  <div className="flex items-center justify-center gap-4 pt-4 border-t border-sky-50">
+                    <span className="text-sm text-sky-500">Current Status:</span>
+                    <span className={cn("px-4 py-1.5 rounded-full text-sm font-bold border", getStatusColor(complaint.COMPLAINTS_STATUS))}>
+                      {complaint.COMPLAINTS_STATUS}
+                    </span>
+                  </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -258,28 +259,28 @@ export function TrackComplaint() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
                         <p className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">Tracking Code</p>
-                        <p className="text-sky-900 font-mono font-bold">{complaint.tracking_code}</p>
+                        <p className="text-sky-900 font-mono font-bold">{complaint.COMPLAINTS_CODE}</p>
                       </div>
                       <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
                         <p className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">TIN Number</p>
-                        <p className="text-sky-900 font-bold">{complaint.tin}</p>
+                        <p className="text-sky-900 font-bold">{complaint.TIN}</p>
                       </div>
                     </div>
 
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
                       <p className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">Category</p>
-                      <p className="text-sky-900 font-bold">{complaint.category_name}</p>
+                      <p className="text-sky-900 font-bold">{complaint.COMPLAINTS_CATEGORY_NAME || complaint.COMPLAINTS_CATEGORY}</p>
                     </div>
 
                     <div>
                       <h3 className="text-sm font-bold text-sky-900 mb-2">Subject</h3>
-                      <p className="text-sky-600 bg-sky-50 p-4 rounded-2xl border border-sky-100">{complaint.subject}</p>
+                      <p className="text-sky-600 bg-sky-50 p-4 rounded-2xl border border-sky-100">{complaint.COMPLAINTS_TITLE}</p>
                     </div>
 
                     <div>
                       <h3 className="text-sm font-bold text-sky-900 mb-2">Description</h3>
                       <div className="text-sky-600 text-sm leading-relaxed bg-sky-50 p-6 rounded-2xl border border-sky-100">
-                        {complaint.description}
+                        {complaint.COMPLAIN_DETAILS}
                       </div>
                     </div>
 
@@ -324,7 +325,7 @@ export function TrackComplaint() {
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-sky-900 text-sm">{res.user_name}</span>
                                 <span className="px-1.5 py-0.5 bg-sky-200 text-sky-600 rounded text-[8px] font-bold uppercase tracking-wider">
-                                  {res.user_role.replace('_', ' ')}
+                                  {res.user_role?.replace('_', ' ')}
                                 </span>
                               </div>
                               <span className="text-[10px] text-sky-400">{formatDate(res.created_at)}</span>

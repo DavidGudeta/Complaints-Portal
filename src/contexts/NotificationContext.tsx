@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Notification, NotificationType } from '../types';
 import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
-  markAsRead: (id: number) => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
 }
 
@@ -16,16 +16,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`/api/notifications?userId=${user.id}`);
-      const data = await res.json();
-      setNotifications(data);
+      const res = await fetch('/api/notifications');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
-  }, [user]);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -35,24 +37,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     fetchNotifications();
 
-    // Setup WebSocket
+    // Setup WebSocket for real-time notifications
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws = new WebSocket(`${protocol}//${window.location.host}?userId=${user.id}`);
 
     ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'NOTIFICATION') {
-        setNotifications(prev => [message.data, ...prev]);
+      const data = JSON.parse(event.data);
+      if (data.type === 'NOTIFICATION') {
+        setNotifications(prev => [data.notification, ...prev]);
       }
     };
 
     return () => ws.close();
-  }, [user, fetchNotifications]);
+  }, [user]);
 
-  const markAsRead = async (id: number) => {
+  const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      const res = await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -61,12 +65,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAllAsRead = async () => {
     if (!user) return;
     try {
-      await fetch('/api/notifications/read-all', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-      });
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      const res = await fetch('/api/notifications/read-all', { method: 'PATCH' });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      }
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
