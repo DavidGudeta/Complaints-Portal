@@ -27,6 +27,7 @@ export function UserManagement() {
 
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     role: UserRole.OFFICER,
@@ -58,6 +59,7 @@ export function UserManagement() {
       setEditingUser(user);
       setFormData({
         name: user.displayName || user.name || '',
+        username: user.username || '',
         email: user.email,
         password: '',
         role: user.role,
@@ -67,6 +69,7 @@ export function UserManagement() {
       setEditingUser(null);
       setFormData({
         name: '',
+        username: '',
         email: '',
         password: '',
         role: UserRole.OFFICER,
@@ -263,6 +266,17 @@ export function UserManagement() {
                   className="w-full px-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-sky-500 uppercase tracking-widest">Username</label>
+                <input 
+                  required
+                  type="text"
+                  className="w-full px-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:ring-1 focus:ring-sky-500 outline-none transition-all"
+                  value={formData.username}
+                  onChange={e => setFormData({ ...formData, username: e.target.value })}
                 />
               </div>
 

@@ -1,42 +1,42 @@
 import db from "../db/index.js";
 import { createNotification } from "./notifications.js";
 
-export const checkDeadlines = () => {
+export const checkDeadlines = async () => {
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   
-  const upcoming = db.prepare(`
-    SELECT * FROM complaints 
-    WHERE status != 'CLOSED' 
-    AND status != 'APPROVED'
-    AND due_date <= ? 
+  const upcoming = await db.prepare(`
+    SELECT * FROM complaints_case 
+    WHERE CASE_STATUS != 'CLOSED' 
+    AND CASE_STATUS != 'APPROVED'
+    AND APPLIED_DATE <= ? 
     AND deadline_notified = 0
   `).all(tomorrow.toISOString()) as any[];
 
-  upcoming.forEach(c => {
+  for (const c of upcoming) {
     // Notify assigned officer
-    if (c.assigned_to) {
-      createNotification(
-        c.assigned_to,
+    if (c.RELEVANT_OFFICER) {
+      await createNotification(
+        c.RELEVANT_OFFICER,
         'DEADLINE_REMINDER',
         'Upcoming Deadline',
-        `Case ${c.tracking_code} is due within 24 hours.`,
-        `/cases/detail/${c.tracking_code}`
+        `Case ${c.COMPLAINT_CODE} is due within 24 hours.`,
+        `/cases/detail/${c.COMPLAINT_CODE}`
       );
     }
     
     // Notify Team Leader
-    const leaders = db.prepare("SELECT id FROM users WHERE role = 'TEAM_LEADER' AND tax_center_id = ?").all(c.tax_center_id) as any[];
-    leaders.forEach(l => {
-      createNotification(
+    const leaders = await db.prepare("SELECT id FROM users WHERE role = 'TEAM_LEADER' AND tax_center_id = CAST(? AS INTEGER)").all(c.TAX_CENTER) as any[];
+    for (const l of leaders) {
+      await createNotification(
         l.id,
         'DEADLINE_REMINDER',
         'Case Deadline Approaching',
-        `Assigned case ${c.tracking_code} is approaching its deadline.`,
-        `/cases/detail/${c.tracking_code}`
+        `Assigned case ${c.COMPLAINT_CODE} is approaching its deadline.`,
+        `/cases/detail/${c.COMPLAINT_CODE}`
       );
-    });
+    }
 
-    db.prepare("UPDATE complaints SET deadline_notified = 1 WHERE id = ?").run(c.id);
-  });
+    await db.prepare("UPDATE complaints_case SET deadline_notified = 1 WHERE COMPLAINTS_ID = ?").run(c.COMPLAINTS_ID);
+  }
 };

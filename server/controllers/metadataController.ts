@@ -1,16 +1,16 @@
 import db from "../db/index.js";
 
-export const getCategories = (req: any, res: any) => {
-  const categories = db.prepare(`
+export const getCategories = async (req: any, res: any) => {
+  const categories = await db.prepare(`
     SELECT c.*, (SELECT COUNT(*) FROM categories WHERE parent_id = c.id) as subcategory_count
     FROM categories c
   `).all();
   res.json(categories);
 };
 
-export const getCategoryTree = (req: any, res: any) => {
-  const categories = db.prepare("SELECT * FROM categories WHERE parent_id IS NULL").all();
-  const subcategories = db.prepare("SELECT * FROM categories WHERE parent_id IS NOT NULL").all();
+export const getCategoryTree = async (req: any, res: any) => {
+  const categories = await db.prepare("SELECT * FROM categories WHERE parent_id IS NULL").all();
+  const subcategories = await db.prepare("SELECT * FROM categories WHERE parent_id IS NOT NULL").all();
   
   const tree = categories.map((cat: any) => ({
     ...cat,
@@ -20,8 +20,8 @@ export const getCategoryTree = (req: any, res: any) => {
   res.json(tree);
 };
 
-export const getSubcategories = (req: any, res: any) => {
-  const subcategories = db.prepare(`
+export const getSubcategories = async (req: any, res: any) => {
+  const subcategories = await db.prepare(`
     SELECT s.*, c.name as category_name 
     FROM categories s 
     JOIN categories c ON s.parent_id = c.id 
@@ -30,62 +30,62 @@ export const getSubcategories = (req: any, res: any) => {
   res.json(subcategories);
 };
 
-export const createCategory = (req: any, res: any) => {
+export const createCategory = async (req: any, res: any) => {
   const { name, parent_id } = req.body;
-  const result = db.prepare("INSERT INTO categories (name, parent_id) VALUES (?, ?)").run(name, parent_id || null);
+  const result = await db.prepare("INSERT INTO categories (name, parent_id) VALUES (?, ?)").run(name, parent_id || null);
   res.json({ id: result.lastInsertRowid });
 };
 
-export const updateCategory = (req: any, res: any) => {
+export const updateCategory = async (req: any, res: any) => {
   const { name, parent_id } = req.body;
-  db.prepare("UPDATE categories SET name = ?, parent_id = ? WHERE id = ?").run(name, parent_id || null, req.params.id);
+  await db.prepare("UPDATE categories SET name = ?, parent_id = ? WHERE id = ?").run(name, parent_id || null, req.params.id);
   res.json({ success: true });
 };
 
-export const deleteCategory = (req: any, res: any) => {
+export const deleteCategory = async (req: any, res: any) => {
   // Check if it has subcategories
-  const subCount = db.prepare("SELECT COUNT(*) as count FROM categories WHERE parent_id = ?").get(req.params.id) as any;
+  const subCount = await db.prepare("SELECT COUNT(*) as count FROM categories WHERE parent_id = ?").get(req.params.id) as any;
   if (subCount.count > 0) {
     return res.status(400).json({ error: "Cannot delete category with subcategories" });
   }
   
   // Check if it's used in complaints
-  const complaintCount = db.prepare("SELECT COUNT(*) as count FROM complaints WHERE category_id = ? OR subcategory_id = ?").get(req.params.id, req.params.id) as any;
+  const complaintCount = await db.prepare("SELECT COUNT(*) as count FROM complaints_case WHERE COMPLAINTS_CATEGORY = CAST(? AS TEXT) OR COMPLAINTS_SUB_CATEGORY = CAST(? AS TEXT)").get(req.params.id, req.params.id) as any;
   if (complaintCount.count > 0) {
     return res.status(400).json({ error: "Cannot delete category used in complaints" });
   }
 
-  db.prepare("DELETE FROM categories WHERE id = ?").run(req.params.id);
+  await db.prepare("DELETE FROM categories WHERE id = ?").run(req.params.id);
   res.json({ success: true });
 };
 
-export const getTaxCenters = (req: any, res: any) => {
-  const centers = db.prepare("SELECT * FROM tax_centers").all();
+export const getTaxCenters = async (req: any, res: any) => {
+  const centers = await db.prepare("SELECT * FROM tax_centers").all();
   res.json(centers);
 };
 
-export const createTaxCenter = (req: any, res: any) => {
+export const createTaxCenter = async (req: any, res: any) => {
   const { name, location } = req.body;
-  const result = db.prepare("INSERT INTO tax_centers (name, location) VALUES (?, ?)").run(name, location);
+  const result = await db.prepare("INSERT INTO tax_centers (name, location) VALUES (?, ?)").run(name, location);
   res.json({ id: result.lastInsertRowid });
 };
 
-export const updateTaxCenter = (req: any, res: any) => {
+export const updateTaxCenter = async (req: any, res: any) => {
   const { name, location } = req.body;
-  db.prepare("UPDATE tax_centers SET name = ?, location = ? WHERE id = ?").run(name, location, req.params.id);
+  await db.prepare("UPDATE tax_centers SET name = ?, location = ? WHERE id = ?").run(name, location, req.params.id);
   res.json({ success: true });
 };
 
-export const deleteTaxCenter = (req: any, res: any) => {
-  const users = db.prepare("SELECT COUNT(*) as count FROM users WHERE tax_center_id = ?").get(req.params.id) as any;
+export const deleteTaxCenter = async (req: any, res: any) => {
+  const users = await db.prepare("SELECT COUNT(*) as count FROM users WHERE tax_center_id = ?").get(req.params.id) as any;
   if (users.count > 0) {
     return res.status(400).json({ error: "Cannot delete tax center with assigned users" });
   }
-  db.prepare("DELETE FROM tax_centers WHERE id = ?").run(req.params.id);
+  await db.prepare("DELETE FROM tax_centers WHERE id = ?").run(req.params.id);
   res.json({ success: true });
 };
 
-export const getStats = (req: any, res: any) => {
+export const getStats = async (req: any, res: any) => {
   const { taxCenterId, role } = req.query;
   let filter = "";
   const params: any[] = [];
@@ -96,10 +96,10 @@ export const getStats = (req: any, res: any) => {
   }
 
   const stats = {
-    total: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE 1=1 ${filter}`).get(...params) as any,
-    pending: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'PENDING' ${filter}`).get(...params) as any,
-    in_progress: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'IN_PROGRESS' ${filter}`).get(...params) as any,
-    closed: db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'CLOSED' ${filter}`).get(...params) as any,
+    total: await db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE 1=1 ${filter}`).get(...params) as any,
+    pending: await db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'PENDING' ${filter}`).get(...params) as any,
+    in_progress: await db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'IN_PROGRESS' ${filter}`).get(...params) as any,
+    closed: await db.prepare(`SELECT COUNT(*) as count FROM complaints_case WHERE CASE_STATUS = 'CLOSED' ${filter}`).get(...params) as any,
   };
   res.json({
     total: stats.total.count,

@@ -20,9 +20,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (!user) return;
     try {
       const res = await fetch('/api/notifications');
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
         const data = await res.json();
         setNotifications(data);
+      } else {
+        console.warn('Received non-JSON response from /api/notifications');
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);

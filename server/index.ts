@@ -43,6 +43,37 @@ async function startServer() {
   app.use("/api/profile", profileRoutes);
   app.use("/api", publicMetadataRoutes);
 
+  // Global Error Handler
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error('Unhandled Error:', err);
+    res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: err.message 
+    });
+  });
+
+  // Supabase Health Check
+  app.get("/api/supabase/status", async (req, res) => {
+    try {
+      const { supabase } = await import("./utils/supabase.js");
+      const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      
+      res.json({ 
+        status: "connected", 
+        message: "Successfully connected to Supabase",
+        details: data 
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        status: "error", 
+        message: "Failed to connect to Supabase",
+        error: error.message 
+      });
+    }
+  });
+
   // Periodic check for deadlines (every hour)
   setInterval(checkDeadlines, 60 * 60 * 1000);
 

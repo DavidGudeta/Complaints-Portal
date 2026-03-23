@@ -15,13 +15,13 @@ export const broadcastNotification = (userId: number, notification: any) => {
   }
 };
 
-export const createNotification = (userId: number, type: string, title: string, message: string, link?: string) => {
-  const result = db.prepare(`
+export const createNotification = async (userId: number, type: string, title: string, message: string, link?: string) => {
+  const result = await db.prepare(`
     INSERT INTO notifications (user_id, type, title, message, link)
     VALUES (?, ?, ?, ?, ?)
   `).run(userId, type, title, message, link);
   
-  const notification = db.prepare("SELECT * FROM notifications WHERE id = ?").get(result.lastInsertRowid);
+  const notification = await db.prepare("SELECT * FROM notifications WHERE id = ?").get(result.lastInsertRowid);
   broadcastNotification(userId, notification);
   return notification;
 };

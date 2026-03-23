@@ -88,6 +88,7 @@ export interface User {
   email: string;
   displayName?: string;
   name?: string; // For backward compatibility
+  username?: string;
   role: UserRole;
   createdAt: string;
   tax_center_id?: string;

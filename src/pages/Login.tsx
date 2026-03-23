@@ -33,20 +33,20 @@ export function Login() {
             <ShieldCheck size={48} className="text-sky-600" />
           </div>
           <h1 className="text-3xl font-bold text-sky-900 tracking-tight mb-2 italic serif">Ministry of Revenues</h1>
-          <p className="text-sky-500">Sign in to access the management portal.</p>
+          <p className="text-sky-500">Sign in with your email or username.</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl shadow-sky-200/50 border border-sky-100 p-8 md:p-12">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-sky-500 uppercase tracking-wider">Email Address</label>
+              <label className="text-sm font-bold text-sky-500 uppercase tracking-wider">Email or Username</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-sky-400" size={20} />
                 <input
-                  type="email"
+                  type="text"
                   required
                   className="w-full pl-12 pr-4 py-3 bg-sky-50 border border-sky-200 rounded-xl focus:border-sky-500 focus:ring-0 transition-all"
-                  placeholder="name@revenue.gov.et"
+                  placeholder="Email or Username"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />
